@@ -22,6 +22,7 @@ import net.kanenet.catexplorer.rig.EqState
 import net.kanenet.catexplorer.rig.FmState
 import net.kanenet.catexplorer.rig.YaesuDsp
 import net.kanenet.catexplorer.rig.FlrigClient
+import net.kanenet.catexplorer.rig.MemChannel
 import net.kanenet.catexplorer.rig.MicState
 import net.kanenet.catexplorer.rig.VoiceState
 import net.kanenet.catexplorer.rig.RigState
@@ -170,6 +171,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
     /** Re-reads the DSP/mic settings from the radio. The panels call this a few times a second while they're open. */
     suspend fun refreshDsp() {
         val c = client ?: return
+        if (pollPaused) return
         runCatching { withContext(Dispatchers.IO) { c.readDsp(_dsp.value) } }.onSuccess { _dsp.value = it }
     }
 
@@ -249,6 +251,8 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private var client: FlrigClient? = null
+    /** Set while the memory list is being read, so FLRig answers those reads without the meter polling competing. */
+    @Volatile private var pollPaused = false
     private var pollJob: Job? = null
 
     fun connect(host: String, port: Int) {
@@ -263,6 +267,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
             var info: FlrigClient.StaticInfo? = null
             var tick = 0
             while (isActive) {
+                if (pollPaused) { delay(100); continue }
                 try {
                     if (info == null || tick % 100 == 0) info = c.readStatic()
                     val i = info!!
@@ -291,7 +296,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
 
     fun disconnect() {
         stopCarrier()
-        pollJob?.cancel(); pollJob = null; client = null
+        pollJob?.cancel(); pollJob = null; client = null; pollPaused = false
         _history.value = emptyList()
         _state.value = RigState()
     }
@@ -315,6 +320,37 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
             }
             _console.value = (_console.value + "> ${cmd.trim()}" + "< ${reply.ifEmpty { "(no reply)" }}").takeLast(200)
         }
+    }
+
+    private val _memories = MutableStateFlow<List<MemChannel>>(emptyList())
+    /** The programmed memory channels from the last scan. */
+    val memories = _memories.asStateFlow()
+    private val _memScan = MutableStateFlow(-1)
+    /** Channel being read during a scan, or -1 when no scan is running. */
+    val memScan = _memScan.asStateFlow()
+
+    fun loadMemories() {
+        val c = client ?: return
+        if (_memScan.value >= 0) return
+        _memScan.value = 0
+        _memories.value = emptyList()
+        pollPaused = true
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    runCatching { c.readMemories({ _memScan.value = it }) { m -> _memories.value = _memories.value + m } }
+                }
+            } finally {
+                pollPaused = false
+                _memScan.value = -1
+            }
+        }
+    }
+
+    /** Moves the radio to a memory channel (switching to memory mode first if it is on a VFO). */
+    fun selectMemory(ch: Int, inMemoryMode: Boolean) = send {
+        if (!inMemoryMode) cat(YaesuDsp.vfoMemory())
+        cat("MC%03d;".format(ch))
     }
 
     override fun onCleared() { disconnect() }

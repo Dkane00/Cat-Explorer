@@ -124,6 +124,9 @@ class FlrigClient(host: String, port: Int) {
     fun catString(cmd: String): String = rpc.call("rig.cat_string", cmd)?.toString().orEmpty()
 
     companion object {
+        /** Last memory channel number to look at (the FT-891 uses 1..99, then the P-1/P-2 and 60 m channels above that). */
+        const val MEM_LAST = 125
+
         /** Radios whose Yaesu "RM" meter codes we've checked against the CAT manual. */
         fun supportsYaesuMeters(xcvr: String) = xcvr == "FT-891"
         fun supportsYaesuDsp(xcvr: String) = xcvr == "FT-891"
@@ -146,6 +149,14 @@ class FlrigClient(host: String, port: Int) {
         val tag = YaesuDsp.parseMemTag(runCatching { catString("MT%03d;".format(d.memChannel)) }.getOrNull(), d.memChannel)
         return if (tag != null) d.copy(memTag = tag) else d
     }
+    /** Reads every memory channel (1..[MEM_LAST]) with MT. [progress] gets each channel number before it is read, [found] each programmed channel as it turns up. */
+    fun readMemories(progress: (Int) -> Unit, found: (MemChannel) -> Unit) {
+        for (ch in 1..MEM_LAST) {
+            progress(ch)
+            YaesuDsp.parseMemChannel(runCatching { catString("MT%03d;".format(ch)) }.getOrNull(), ch)?.let(found)
+        }
+    }
+
     fun readCw(old: CwState): CwState = YaesuDsp.parseCw(catReads(YaesuDsp.CW_READS), old)
     fun readFm(old: FmState): FmState = YaesuDsp.parseFm(catReads(YaesuDsp.FM_READS), old)
     fun readVoice(old: VoiceState): VoiceState = YaesuDsp.parseVoice(catReads(YaesuDsp.VOICE_READS), old)

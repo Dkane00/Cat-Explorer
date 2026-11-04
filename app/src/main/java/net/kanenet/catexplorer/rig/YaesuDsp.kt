@@ -61,6 +61,9 @@ data class FmState(
 )
 
 /** Voice memory (DVS): which of channels 1..5 is playing or recording, 0 = none. */
+/** One programmed memory channel, as read with MT. */
+data class MemChannel(val ch: Int, val hz: Long, val mode: String, val tone: String, val shift: String, val name: String)
+
 data class VoiceState(val playing: Int = 0, val recording: Int = 0)
 
 /** One band of the mic equaliser. freqIdx 0 = band off (the radio's menu uses 00 for OFF). */
@@ -167,6 +170,29 @@ object YaesuDsp {
         return if (t[27] == '1') t.substring(28, 40).trim() else ""
     }
 
+    private val MEM_MODES = mapOf(
+        '1' to "LSB", '2' to "USB", '3' to "CW-U", '4' to "FM", '5' to "AM", '6' to "RTTY-L", '7' to "CW-L", '8' to "DATA-L",
+        '9' to "RTTY-U", 'A' to "DATA-FM", 'B' to "FM-N", 'C' to "DATA-U", 'D' to "AM-N", 'E' to "C4FM",
+    )
+    private val MEM_TONES = listOf("—", "CTCSS T/R", "CTCSS enc", "DCS T/R", "DCS enc")
+
+    /**
+     * A whole-channel MT read: "MT" + channel(3) + freq(9) + clarifier(5) + RX clar + TX clar + mode + type + tone + "00" + shift + tag flag + 12 tag chars.
+     * The channel number inside the radio's reply is not the one asked for, so the caller supplies it. Null for an empty channel ("?;").
+     */
+    fun parseMemChannel(reply: String?, channel: Int): MemChannel? {
+        val t = reply?.trimEnd() ?: return null
+        if (t.length < 28 || !t.startsWith("MT")) return null
+        val hz = t.substring(5, 14).toLongOrNull() ?: return null
+        val name = if (t[27] == '1') t.substring(28, minOf(40, t.length)).trim() else ""
+        return MemChannel(
+            channel, hz, MEM_MODES[t[21]] ?: "?",
+            MEM_TONES.getOrElse(t[23].digitToIntOrNull() ?: 0) { "?" },
+            when (t[26]) { '1' -> "+"; '2' -> "−"; else -> "" },
+            name,
+        )
+    }
+
     fun parseCw(r: List<Any?>, old: CwState): CwState = old.copy(
         speed = int(r[0], 2) ?: old.speed,
         pitchIdx = int(r[1], 2) ?: old.pitchIdx,
@@ -205,7 +231,7 @@ object YaesuDsp {
     fun readbackFor(set: String): String = when (set.take(2)) {
         "MG", "PL", "LK" -> set.take(2) + ";"
         "BP", "CO" -> set.take(4) + ";"
-        "VM", "SV" -> "IF;"
+        "VM", "SV", "MC" -> "IF;"
         "KS", "KP", "KR", "BI", "SD", "CS" -> set.take(2) + ";"
         "CN" -> set.take(4) + ";"
         "KY" -> "KS;"   // keyer-memory playback has no read of its own

@@ -172,6 +172,7 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
     val memMode = d.memoryMode && FlrigClient.supportsYaesuDsp(s.xcvr)
     val activeB = s.activeVfo == "B" && !memMode
     var showDsp by remember { mutableStateOf(false) }
+    var showMemories by remember { mutableStateOf(false) }
     fun leaveMemory() = vm.setDsp(YaesuDsp.vfoMemory()) { copy(memoryMode = false) }
     var showMic by remember { mutableStateOf(false) }
     var feature by remember { mutableStateOf<Feature?>(null) }   // which settings panel is open beside the chips
@@ -191,6 +192,9 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
             PickerButton("Mode", s.mode.ifEmpty { "—" }, s.modes, s.mode) { m -> vm.send { setMode(m) } }
             PickerButton("BW", if (s.bandwidth.isEmpty()) "—" else "${s.bandwidth} Hz", s.bandwidths, s.bandwidth) { b ->
                 b.toIntOrNull()?.let { vm.send { setBandwidth(it) } }
+            }
+            if (FlrigClient.supportsYaesuDsp(s.xcvr)) {
+                FilledTonalButton({ showMemories = true }, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)) { Text("Memories", fontSize = 18.sp) }
             }
       }
       if (portrait) Box(Modifier.padding(top = 4.dp)) { FlowRowCompat(body) } else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { body() }
@@ -312,6 +316,7 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
     }
     if (showDsp) DspDialog(vm) { showDsp = false }
     if (showMic) MicDialog(vm) { showMic = false }
+    if (showMemories) MemoryDialog(vm) { showMemories = false }
 
     if (editing) {
         AlertDialog(
