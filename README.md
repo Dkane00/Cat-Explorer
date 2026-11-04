@@ -1,41 +1,68 @@
 # Cat Explorer
 
-Android app (phone/tablet) that talks to **FLRig** over the network (XML-RPC, default port 12345)
-to show radio readouts and send CAT commands — modelled on the CatTouch7USB touchscreen controller.
+A touchscreen controller for the **Yaesu FT-891** HF transceiver, for Android tablets and phones. It shows the radio's frequency, mode, filter and meters live and lets you control the radio from the screen, either **through FLRig on a PC** or **directly over USB** with an OTG cable and no PC at all. It is modelled on the CatTouch7USB touchscreen controller.
+
+![Cat Explorer main screen, connected to an FT-891 over USB](docs/screenshot-main.png)
+
+> **Radio support: FT-891 only, for now.**
+> Most of the CAT (Computer Aided Transceiver) commands in this app are written for the FT-891 and its CAT manual: the DSP and filter settings, meter scales, memory channels, filter-width table and the like. Other Yaesu radios use different commands and ranges, and other brands use different protocols altogether. The app has only been tested on an FT-891. Support for other radios is not planned yet.
+
+## What it does
+
+- **Live readout and control**: frequency (tap to type one in), VFO A/B, split, mode, band, filter width, IPO/ATT, dial lock, press-and-hold PTT.
+- **Meters**: S, power, SWR, ALC, compression and drain current, as bars or analogue needle gauges, plus a rolling signal-history trace.
+- **Sliders**: volume, RF gain, mic gain and TX power, with ◀ ▶ arrows for single steps.
+- **DSP and IF popup** (tap the DSP graph): IF shift, width, noise blanker and reduction, contour, notch, APF and AGC. A mic EQ and speech-processor popup is available from the MIC EQ graph.
+- **CW, FM and voice-memory panels** for keyer speed, pitch and break-in, repeater shift and tones, and voice-memory playback.
+- **Memory channels**: a table of the radio's programmed channels. Tap a row to go to it, or add and edit channels (frequency, mode, tone, shift, name). The channel list is backed up to the app's files folder before the first write of a session.
+- **Band button**: jumps to a phone calling frequency on each band and sets its usual mode (30 m goes to its digital frequency in DATA-U). The Bands tab lists the digital-mode calling frequencies.
+- **Tune button**: runs the radio's own antenna tuner, or, for an external auto-tuner, sends a short low-power AM carrier and then puts your mode, width and power back.
+- **Raw CAT console** for sending any CAT command and seeing the reply.
+- **Themes**: dark or light, with every colour changeable.
+
+## Two ways to connect
+
+### Directly over USB (no PC)
+
+Plug the radio's USB port into the tablet with a USB-C OTG cable. In the app, enter the baud rate and tap **Connect over USB**. The baud rate must match the radio's CAT RATE (menu 05-06). Android will ask once for permission to use the radio's USB serial bridge.
+
+- The app speaks CAT straight to the radio. FLRig and the PC are not involved.
+- The radio can only be connected to one computer at a time, so with the tablet plugged in the PC cannot use the same USB port (a USB hub does not change this).
+- Some things are not available in this mode: typed CW text (use the keyer memories 1 to 5), FLRig's user buttons, and the A and B VFO buttons (the radio has no CAT command to pick a VFO; use A/B to swap them instead).
+
+### Through FLRig on a PC
+
+Run FLRig on the computer the radio is plugged into. In FLRig turn on the XML-RPC server (Config → Setup → UI → Server), make sure it listens on the network and not only on localhost, and allow its port (default 12345) through the PC's firewall. In the app, enter the PC's address and port and tap **Connect**. The tablet and the PC must be on the same network or VPN.
+
+## Safety
+
+This app can **transmit**. PTT, Tune and the carrier mode key the radio. Check that your antenna is connected and use low power when trying new things. The Tune carrier is limited to 5 to 10 W and stops by itself after one minute.
 
 ## Build
+
+You need JDK 17 and the Android SDK. `env.sh` shows the paths used here (adjust them for your machine).
+
 ```bash
-source ./env.sh                 # JDK 17 + Gradle + Android SDK paths (installed under ~/tools and ~/Android)
+source ./env.sh                 # JDK 17 + Gradle + Android SDK paths
 ./gradlew :app:assembleDebug    # -> app/build/outputs/apk/debug/app-debug.apk
 ./gradlew :app:testDebugUnitTest
-CATEXPLORER_LIVE=127.0.0.1 ./gradlew :app:testDebugUnitTest   # adds a read-only test against a running FLRig
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## FLRig setup
-FLRig's XML-RPC server must be reachable from the tablet: same Wi-Fi/VPN, PC firewall open on 12345.
-Enter the PC's IP in the app's connect screen.
+`CATEXPLORER_LIVE=127.0.0.1 ./gradlew :app:testDebugUnitTest` adds a read-only test against a running FLRig.
 
-## Direct USB (no FLRig, no PC)
-Plug the FT-891 into the tablet with a USB-C OTG cable, set the baud rate to the radio's CAT RATE (menu 05-06; 9600 here)
-and tap "Connect over USB". The app talks Yaesu CAT to the radio's CP2105 serial bridge (`rig/UsbLink.kt`, `rig/UsbCatClient.kt`,
-using the usb-serial-for-android library). The radio only answers with RTS asserted, so the app raises it. The tablet then holds the
-only CAT connection, so FLRig on the PC can't use that port at the same time.
-Not available over USB yet: typed CW text / abort (use keyer memories 1-5), FLRig user buttons, reliable A/B detection (see TODO in UsbCatClient).
+## Code layout
 
-## Layout
-- `rig/XmlRpc.kt` – tiny XML-RPC client (+ `system.multicall` batching)
-- `rig/RigClient.kt` – the interface both connections implement
-- `rig/FlrigClient.kt` – every FLRig call the app uses
-- `rig/UsbCatClient.kt`, `rig/UsbLink.kt` – direct USB serial CAT and the permission/port-probing step
-- `RigViewModel.kt` – polling loop (~8 Hz) and command dispatch
-- `ui/` – connect screen, radio screen, bar meters
+- `rig/RigClient.kt`: the interface both connections implement.
+- `rig/FlrigClient.kt` and `rig/XmlRpc.kt`: the FLRig connection (a small XML-RPC client).
+- `rig/UsbCatClient.kt` and `rig/UsbLink.kt`: the direct USB connection (CAT over the radio's CP2105 serial bridge, using the [usb-serial-for-android](https://github.com/mik3y/usb-serial-for-android) library).
+- `rig/YaesuDsp.kt`: FT-891 CAT command strings and reply parsers.
+- `RigViewModel.kt`: the polling loop and command dispatch.
+- `ui/`: connect screen, radio screen, meters, DSP and memory panels, settings.
 
-## Features
-Frequency/VFO/split/mode/bandwidth control, S/PWR/SWR meters, rolling RX/TX signal-history trace,
-AF/RF/MIC/power sliders, press-and-hold PTT, Tune, band shortcuts, CW keyer memories (via FLRig CWIO),
-FLRig user-button 1–24 launcher, raw CAT console.
+## Status and limits
 
-## Not yet / limits
-No spectrum/waterfall (FLRig exposes no scope data), no memory channels, no SWR sweep.
-SWR/S/power scales are approximations of FLRig's 0–100 meter values.
+- Tested on an FT-891 with a Samsung Galaxy Tab S6 Lite (Android 16). The FLRig path has had the most use. The USB path is newer: reading the radio, width changes, the A/B swap, Tune and the Band button have been tested over USB, while other controls have had less testing there.
+- The radio's spectrum scope can't be shown because the FT-891 doesn't send scope data over CAT.
+- The radio can't store a filter width in a memory channel over CAT.
+- Meter scales (especially SWR and S) are approximations.
