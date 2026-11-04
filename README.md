@@ -66,3 +66,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - The radio's spectrum scope can't be shown because the FT-891 doesn't send scope data over CAT.
 - The radio can't store a filter width in a memory channel over CAT.
 - Meter scales (especially SWR and S) are approximations.
+
+## License
+
+Cat Explorer is open source under the [MIT License](LICENSE). Copyright (c) 2026 David Kane (W6MZT).
