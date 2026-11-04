@@ -4,13 +4,13 @@ package net.kanenet.catexplorer.rig
  * Everything the app can ask FLRig to do. Blocking calls — run them off the main thread
  * (the ViewModel does this).
  */
-class FlrigClient(host: String, port: Int) {
+class FlrigClient(host: String, port: Int) : RigClient {
     private val rpc = XmlRpcClient(host, port)
 
     // ---- reads -------------------------------------------------------------------------
 
     /** One-time (and occasional) info that doesn't change while you operate. */
-    fun readStatic(): StaticInfo {
+    override fun readStatic(): RigClient.StaticInfo {
         val r = rpc.multicall(
             listOf(
                 "rig.get_xcvr" to emptyList(),
@@ -25,7 +25,7 @@ class FlrigClient(host: String, port: Int) {
             val inner = (first.firstOrNull() as? List<*>) ?: first
             inner.drop(if (inner.firstOrNull()?.toString()?.toIntOrNull() == null) 1 else 0).map { it.toString() }
         } ?: emptyList()
-        return StaticInfo(
+        return RigClient.StaticInfo(
             xcvr = r[0]?.toString().orEmpty(),
             version = r[1]?.toString().orEmpty(),
             modes = (r[2] as? List<*>)?.map { it.toString() } ?: emptyList(),
@@ -35,7 +35,7 @@ class FlrigClient(host: String, port: Int) {
     }
 
     /** Fast poll — everything that changes. */
-    fun poll(previous: RigState, extraMeters: Boolean = false): RigState {
+    override fun poll(previous: RigState, extraMeters: Boolean): RigState {
         // ALC / COMP / ID only mean anything while transmitting, so only ask the radio for them then.
         val readExtras = extraMeters && previous.ptt
         val r = rpc.multicall(
@@ -95,33 +95,33 @@ class FlrigClient(host: String, port: Int) {
 
     // ---- writes ------------------------------------------------------------------------
 
-    fun setFrequency(hz: Double) { rpc.call("rig.set_frequency", hz) }
-    fun setVfoA(hz: Double) { rpc.call("rig.set_vfoA", hz) }
-    fun setVfoB(hz: Double) { rpc.call("rig.set_vfoB", hz) }
-    fun modVfo(deltaHz: Double, vfoB: Boolean) { rpc.call(if (vfoB) "rig.mod_vfoB" else "rig.mod_vfoA", deltaHz) }
-    fun setMode(mode: String) { rpc.call("rig.set_mode", mode) }
-    fun setModeB(mode: String) { rpc.call("rig.set_modeB", mode) }
-    fun setBandwidth(bw: Int) { rpc.call("rig.set_bandwidth", bw) }
-    fun setActiveVfo(ab: String) { rpc.call("rig.set_AB", ab) }
-    fun setSplit(on: Boolean) { rpc.call("rig.set_split", if (on) 1 else 0) }
+    override fun setFrequency(hz: Double) { rpc.call("rig.set_frequency", hz) }
+    override fun setVfoA(hz: Double) { rpc.call("rig.set_vfoA", hz) }
+    override fun setVfoB(hz: Double) { rpc.call("rig.set_vfoB", hz) }
+    override fun modVfo(deltaHz: Double, vfoB: Boolean) { rpc.call(if (vfoB) "rig.mod_vfoB" else "rig.mod_vfoA", deltaHz) }
+    override fun setMode(mode: String) { rpc.call("rig.set_mode", mode) }
+    override fun setModeB(mode: String) { rpc.call("rig.set_modeB", mode) }
+    override fun setBandwidth(bw: Int) { rpc.call("rig.set_bandwidth", bw) }
+    override fun setActiveVfo(ab: String) { rpc.call("rig.set_AB", ab) }
+    override fun setSplit(on: Boolean) { rpc.call("rig.set_split", if (on) 1 else 0) }
     // FLRig's rig.swap does nothing on the FT-891, so use the radio's own SWAP VFO command (SV;)
-    fun swapVfo() { cat(YaesuDsp.swapVfo()) }
-    fun vfoAtoB() { rpc.call("rig.vfoA2B") }
-    fun setPtt(on: Boolean) { rpc.call("rig.set_ptt", if (on) 1 else 0) }
-    fun tune() { rpc.call("rig.tune") }
-    fun setVolume(v: Int) { rpc.call("rig.set_volume", v) }
-    fun setRfGain(v: Int) { rpc.call("rig.set_rfgain", v) }
-    fun setMicGain(v: Int) { rpc.call("rig.set_micgain", v) }
-    fun setPower(watts: Int) { rpc.call("rig.set_power", watts) }
-    fun cwSpeed(wpm: Int) { rpc.call("rig.cwio_set_wpm", wpm) }
-    fun cwText(text: String) { rpc.call("rig.cwio_text", text) }
-    fun cwAbort() { rpc.call("rig.cwio_send", 0) }
-    fun cwGetWpm(): Int = (rpc.call("rig.cwio_get_wpm") as? Number)?.toInt() ?: 20
+    override fun swapVfo() { cat(YaesuDsp.swapVfo()) }
+    override fun vfoAtoB() { rpc.call("rig.vfoA2B") }
+    override fun setPtt(on: Boolean) { rpc.call("rig.set_ptt", if (on) 1 else 0) }
+    override fun tune() { rpc.call("rig.tune") }
+    override fun setVolume(v: Int) { rpc.call("rig.set_volume", v) }
+    override fun setRfGain(v: Int) { rpc.call("rig.set_rfgain", v) }
+    override fun setMicGain(v: Int) { rpc.call("rig.set_micgain", v) }
+    override fun setPower(watts: Int) { rpc.call("rig.set_power", watts) }
+    override fun cwSpeed(wpm: Int) { rpc.call("rig.cwio_set_wpm", wpm) }
+    override fun cwText(text: String) { rpc.call("rig.cwio_text", text) }
+    override fun cwAbort() { rpc.call("rig.cwio_send", 0) }
+    override fun cwGetWpm(): Int = (rpc.call("rig.cwio_get_wpm") as? Number)?.toInt() ?: 20
     /** FLRig user-defined command button, 1..24 (25..48 = shifted). */
-    fun userCmd(n: Int) { rpc.call("rig.cmd", n) }
+    override fun userCmd(n: Int) { rpc.call("rig.cmd", n) }
 
     /** Sends a raw CAT string (e.g. "FA;" on Yaesu) and returns FLRig's reply. */
-    fun catString(cmd: String): String = rpc.call("rig.cat_string", cmd)?.toString().orEmpty()
+    override fun catString(cmd: String): String = rpc.call("rig.cat_string", cmd)?.toString().orEmpty()
 
     companion object {
         /** Last memory channel number to look at (the FT-891 uses 1..99, then the P-1/P-2 and 60 m channels above that). */
@@ -140,43 +140,8 @@ class FlrigClient(host: String, port: Int) {
     }
 
     /** Sends a Yaesu CAT set-command, followed by a read of the same setting so FLRig gets a reply straight away. */
-    fun cat(cmd: String) { rpc.call("rig.cat_string", cmd + YaesuDsp.readbackFor(cmd)) }
+    override fun cat(cmd: String) { rpc.call("rig.cat_string", cmd + YaesuDsp.readbackFor(cmd)) }
 
-    fun readDsp(old: DspState): DspState {
-        val d = YaesuDsp.parseDsp(catReads(YaesuDsp.DSP_READS), old)
-        if (!d.memoryMode) return d
-        // the channel name needs its own read; it's only shown in memory mode
-        val tag = YaesuDsp.parseMemTag(runCatching { catString("MT%03d;".format(d.memChannel)) }.getOrNull(), d.memChannel)
-        return if (tag != null) d.copy(memTag = tag) else d
-    }
-    /** Reads every memory channel (1..[MEM_LAST]) with MT. [progress] gets each channel number before it is read, [found] each programmed channel as it turns up. */
-    fun readMemories(progress: (Int) -> Unit, found: (MemChannel) -> Unit) {
-        for (ch in 1..MEM_LAST) {
-            progress(ch)
-            YaesuDsp.parseMemChannel(runCatching { catString("MT%03d;".format(ch)) }.getOrNull(), ch)?.let(found)
-        }
-    }
-
-    /**
-     * Writes one memory channel and reads it straight back in the same request. Returns what the radio now holds, or null if
-     * the read-back wasn't understood.
-     */
-    fun writeMemory(m: MemChannel): MemChannel? =
-        YaesuDsp.parseMemChannel(catString(YaesuDsp.memWrite(m) + "MT%03d;".format(m.ch)), m.ch)
-
-    fun readCw(old: CwState): CwState = YaesuDsp.parseCw(catReads(YaesuDsp.CW_READS), old)
-    fun readFm(old: FmState): FmState = YaesuDsp.parseFm(catReads(YaesuDsp.FM_READS), old)
-    fun readVoice(old: VoiceState): VoiceState = YaesuDsp.parseVoice(catReads(YaesuDsp.VOICE_READS), old)
-    fun readMic(old: MicState): MicState = YaesuDsp.parseMic(catReads(YaesuDsp.MIC_READS), old)
-
-    private fun catReads(cmds: List<String>): List<Any?> =
+    override fun catReads(cmds: List<String>): List<Any?> =
         rpc.multicall(cmds.map { "rig.cat_string" to listOf<Any>(it) })
-
-    data class StaticInfo(
-        val xcvr: String,
-        val version: String,
-        val modes: List<String>,
-        val bandwidths: List<String>,
-        val maxPower: Int,
-    )
 }

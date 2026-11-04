@@ -178,6 +178,13 @@ object YaesuDsp {
         '1' to "LSB", '2' to "USB", '3' to "CW-U", '4' to "FM", '5' to "AM", '6' to "RTTY-L", '7' to "CW-L", '8' to "DATA-L",
         '9' to "RTTY-U", 'A' to "DATA-FM", 'B' to "FM-N", 'C' to "DATA-U", 'D' to "AM-N", 'E' to "C4FM",
     )
+    /** Mode name for an MD / IF / MT mode code, or null if unknown. */
+    fun modeLabel(code: Char): String? = MEM_MODES[code]
+    /** MD code for a mode name, or null. */
+    fun modeCode(label: String): Char? = MEM_MODES.entries.firstOrNull { it.value == label }?.key
+    /** Mode names offered for the MD command, in the order the picker shows them. */
+    val MD_LABELS: List<String> = listOf('1', '2', '3', '7', '4', 'B', 'A', '5', 'D', '8', 'C', '6', '9').map { MEM_MODES.getValue(it) }
+
     private val MEM_TONES = listOf("—", "CTCSS T/R", "CTCSS enc", "DCS T/R", "DCS enc")
 
     /**

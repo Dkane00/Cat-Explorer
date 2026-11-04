@@ -32,6 +32,8 @@ data class RigState(
     val modes: List<String> = emptyList(),
     val bandwidths: List<String> = emptyList(),
 ) {
+    /** Connected straight to the radio over USB rather than through FLRig. */
+    val directUsb: Boolean get() = flrigVersion.startsWith("USB")
     val activeHz: Long get() = if (activeVfo == "B") vfoBHz else vfoAHz
     val idleHz: Long get() = if (activeVfo == "B") vfoAHz else vfoBHz
 }

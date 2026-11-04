@@ -16,9 +16,18 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 FLRig's XML-RPC server must be reachable from the tablet: same Wi-Fi/VPN, PC firewall open on 12345.
 Enter the PC's IP in the app's connect screen.
 
+## Direct USB (no FLRig, no PC)
+Plug the FT-891 into the tablet with a USB-C OTG cable, set the baud rate to the radio's CAT RATE (menu 05-06; 9600 here)
+and tap "Connect over USB". The app talks Yaesu CAT to the radio's CP2105 serial bridge (`rig/UsbLink.kt`, `rig/UsbCatClient.kt`,
+using the usb-serial-for-android library). The radio only answers with RTS asserted, so the app raises it. The tablet then holds the
+only CAT connection, so FLRig on the PC can't use that port at the same time.
+Not available over USB yet: typed CW text / abort (use keyer memories 1-5), FLRig user buttons, reliable A/B detection (see TODO in UsbCatClient).
+
 ## Layout
 - `rig/XmlRpc.kt` – tiny XML-RPC client (+ `system.multicall` batching)
+- `rig/RigClient.kt` – the interface both connections implement
 - `rig/FlrigClient.kt` – every FLRig call the app uses
+- `rig/UsbCatClient.kt`, `rig/UsbLink.kt` – direct USB serial CAT and the permission/port-probing step
 - `RigViewModel.kt` – polling loop (~8 Hz) and command dispatch
 - `ui/` – connect screen, radio screen, bar meters
 

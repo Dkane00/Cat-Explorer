@@ -150,7 +150,7 @@ private fun StatusBar(s: RigState, onConsole: () -> Unit, onSettings: () -> Unit
                 if (s.connected) (if (s.ptt) "TX" else "RX") + "  ${s.xcvr}" else (s.error ?: "Disconnected"),
                 fontSize = 16.sp, modifier = Modifier.weight(1f),
             )
-            if (s.flrigVersion.isNotEmpty()) Text("FLRig ${s.flrigVersion}", fontSize = 12.sp, color = th[ThemeColor.LABEL])
+            if (s.flrigVersion.isNotEmpty()) Text(if (s.flrigVersion.startsWith("USB")) s.flrigVersion else "FLRig ${s.flrigVersion}", fontSize = 12.sp, color = th[ThemeColor.LABEL])
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onSettings) { Text("Settings") }
@@ -240,8 +240,8 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
         }
         Spacer(Modifier.height(8.dp))
         FlowRowCompat {
-            FilterChip(!activeB, { vm.send { setActiveVfo("A") } }, { Text("A") }, colors = selectedBlue())
-            FilterChip(activeB, { if (memMode) leaveMemory() else vm.send { setActiveVfo("B") } }, { Text("B") }, colors = selectedBlue())
+            FilterChip(!activeB, { vm.send { setActiveVfo("A") } }, { Text("A") }, enabled = !s.directUsb, colors = selectedBlue())
+            FilterChip(activeB, { if (memMode) leaveMemory() else vm.send { setActiveVfo("B") } }, { Text("B") }, enabled = !s.directUsb, colors = selectedBlue())
             if (FlrigClient.supportsYaesuDsp(s.xcvr)) {
                 // the radio's [V/M] key; FLRig has no call for it, so it goes out as a CAT command
                 FilterChip(d.memoryMode, { vm.setDsp(YaesuDsp.vfoMemory()) { copy(memoryMode = !memoryMode) } }, { Text(if (d.memoryMode) "MEM" else "VFO") }, colors = selectedBlue())

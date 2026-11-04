@@ -22,6 +22,8 @@ import net.kanenet.catexplorer.rig.EqState
 import net.kanenet.catexplorer.rig.FmState
 import net.kanenet.catexplorer.rig.YaesuDsp
 import net.kanenet.catexplorer.rig.FlrigClient
+import net.kanenet.catexplorer.rig.RigClient
+import net.kanenet.catexplorer.rig.UsbLink
 import net.kanenet.catexplorer.rig.MemChannel
 import net.kanenet.catexplorer.rig.MicState
 import net.kanenet.catexplorer.rig.VoiceState
@@ -48,6 +50,8 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
     val host = _host.asStateFlow()
     private val _port = MutableStateFlow(prefs.getInt("port", 12345))
     val port = _port.asStateFlow()
+    private val _baud = MutableStateFlow(prefs.getInt("usb_baud", 9600))
+    val baud = _baud.asStateFlow()
 
     /** Lines of the raw CAT console: "> cmd" and "< reply". */
     private val _console = MutableStateFlow<List<String>>(emptyList())
@@ -250,7 +254,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         send { cat(cmd) }
     }
 
-    private var client: FlrigClient? = null
+    private var client: RigClient? = null
     /** Set while the memory list is being read, so FLRig answers those reads without the meter polling competing. */
     @Volatile private var pollPaused = false
     private var pollJob: Job? = null
@@ -259,37 +263,57 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         prefs.edit().putString("host", host).putInt("port", port).apply()
         _host.value = host; _port.value = port
         disconnect()
-        val c = FlrigClient(host.trim(), port)
-        client = c
+        startPolling { FlrigClient(host.trim(), port) }
+    }
+
+    /** Connects straight to the radio's USB serial port (OTG cable), no FLRig. */
+    fun connectUsb(baud: Int) {
+        prefs.edit().putInt("usb_baud", baud).apply()
+        _baud.value = baud
+        disconnect()
+        startPolling { UsbLink.open(getApplication(), baud) }
+    }
+
+    private fun startPolling(open: () -> RigClient) {
         pollJob = viewModelScope.launch(Dispatchers.IO) {
             _state.value = RigState(error = "Connecting…")
+            val c = try { open() } catch (e: Exception) {
+                _state.value = RigState(error = e.message ?: "Couldn't connect")
+                return@launch
+            }
+            client = c
             var failures = 0
-            var info: FlrigClient.StaticInfo? = null
+            var info: RigClient.StaticInfo? = null
             var tick = 0
-            while (isActive) {
-                if (pollPaused) { delay(100); continue }
-                try {
-                    if (info == null || tick % 100 == 0) info = c.readStatic()
-                    val i = info!!
-                    val next = c.poll(_state.value, FlrigClient.supportsYaesuMeters(i.xcvr)).copy(
-                        xcvr = i.xcvr, flrigVersion = i.version, modes = i.modes,
-                        bandwidths = i.bandwidths, maxPower = i.maxPower,
-                    )
-                    ensureActive()   // a poll that was in flight when Disconnect was pressed must not bring the screen back
-                    _state.value = next
-                    _history.value = (_history.value + HistorySample(next.smeter, next.powerMeter, next.swrMeter, next.ptt)).takeLast(HISTORY_LEN)
-                    if (tick == 0) _cwWpm.value = runCatching { c.cwGetWpm() }.getOrDefault(_cwWpm.value)
-                    failures = 0
-                    tick++
-                    delay(250)
-                } catch (e: kotlinx.coroutines.CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    failures++
-                    // one slow reply shouldn't flash an error; only report after repeated failures
-                    if (failures >= 3 || !_state.value.connected) _state.value = _state.value.copy(connected = false, error = e.message ?: "Connection lost")
-                    delay(if (failures < 5) 500 else 2000)
+            try {
+                while (isActive) {
+                    if (pollPaused) { delay(100); continue }
+                    try {
+                        if (info == null || tick % 100 == 0) info = c.readStatic()
+                        val i = info!!
+                        val polled = c.poll(_state.value, FlrigClient.supportsYaesuMeters(i.xcvr))
+                        val next = polled.copy(
+                            xcvr = i.xcvr, flrigVersion = i.version, modes = i.modes,
+                            bandwidths = i.bandwidths.ifEmpty { polled.bandwidths }, maxPower = i.maxPower,
+                        )
+                        ensureActive()   // a poll that was in flight when Disconnect was pressed must not bring the screen back
+                        _state.value = next
+                        _history.value = (_history.value + HistorySample(next.smeter, next.powerMeter, next.swrMeter, next.ptt)).takeLast(HISTORY_LEN)
+                        if (tick == 0) _cwWpm.value = runCatching { c.cwGetWpm() }.getOrDefault(_cwWpm.value)
+                        failures = 0
+                        tick++
+                        delay(250)
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        failures++
+                        // one slow reply shouldn't flash an error; only report after repeated failures
+                        if (failures >= 3 || !_state.value.connected) _state.value = _state.value.copy(connected = false, error = e.message ?: "Connection lost")
+                        delay(if (failures < 5) 500 else 2000)
+                    }
                 }
+            } finally {
+                (c as? java.io.Closeable)?.let { withContext(kotlinx.coroutines.NonCancellable) { runCatching { it.close() } } }
             }
         }
     }
@@ -302,7 +326,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Runs a command on the IO thread; the next poll picks up the new radio state. */
-    fun send(block: FlrigClient.() -> Unit) {
+    fun send(block: RigClient.() -> Unit) {
         val c = client ?: return
         viewModelScope.launch(Dispatchers.IO) {
             try { c.block() } catch (e: Exception) {
