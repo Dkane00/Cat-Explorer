@@ -120,14 +120,16 @@ fun RadioScreen(vm: RigViewModel, onSettings: () -> Unit) {
         }
         var tab by remember { mutableIntStateOf(0) }
         Card(Modifier.fillMaxWidth()) {
-            TabRow(tab, containerColor = Color.Transparent) {
-                listOf("Bands", "CW", "FLRig buttons").forEachIndexed { i, t -> Tab(tab == i, { tab = i }, text = { Text(t) }) }
+            // FLRig's user buttons only exist when FLRig is in the loop
+            val tabs = if (s.directUsb) listOf("Bands", "CW") else listOf("Bands", "CW", "FLRig buttons")
+            TabRow(tab.coerceAtMost(tabs.lastIndex), containerColor = Color.Transparent) {
+                tabs.forEachIndexed { i, t -> Tab(tab == i, { tab = i }, text = { Text(t) }) }
             }
             Spacer(Modifier.height(8.dp))
             when (tab) {
                 0 -> BandPanel(vm)
                 1 -> CwPanel(vm)
-                else -> UserButtonPanel(vm)
+                else -> if (s.directUsb) CwPanel(vm) else UserButtonPanel(vm)
             }
         }
         if (showConsole) ConsolePanel(vm)
