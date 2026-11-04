@@ -88,7 +88,7 @@ private fun SettingsList(vm: RigViewModel, theme: ThemeSettings, onClose: () -> 
             }
             Text(
                 if (!carrier) "Tune asks the radio to run its own antenna tuner (for a tuner that works with the radio, like a Yaesu one)."
-                else "Tune becomes an on/off button: it switches to CW, sends a steady carrier at the power below, and stops by itself after 1 minute. Mode, width and power are put back afterwards.",
+                else "Tune becomes an on/off button: it switches to AM, sends a steady carrier at the power below, and stops by itself after 1 minute. Mode, width and power are put back afterwards.",
                 fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp),
             )
             if (carrier) {

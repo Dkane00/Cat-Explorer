@@ -114,7 +114,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
 
     fun stopCarrier() { carrierJob?.cancel() }
 
-    /** Carrier mode: tap to start, tap again to stop. Goes to CW at the tune power, keys the radio, then puts mode/width/power back. */
+    /** Carrier mode: tap to start, tap again to stop. Goes to AM at the tune power, keys the radio, then puts mode/width/power back. */
     fun toggleCarrier() {
         if (carrierJob?.isActive == true) { stopCarrier(); return }
         val c = client ?: return
@@ -125,7 +125,8 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
             var savedPower: String? = null
             var savedWidth: String? = null
             try {
-                val cwMode = listOf("CW-U", "CW", "CW-L").firstOrNull { it in st.modes } ?: "CW-U"
+                // AM, not CW: keying the radio over CAT in CW mode sends nothing until a key closes, but an AM carrier is steady RF
+                val cwMode = "AM"
                 savedPower = Regex("PC(\\d{3})").find(c.catString("PC;"))?.groupValues?.get(1)
                 savedWidth = Regex("SH0\\d{3}").find(c.catString("SH0;"))?.value
                 if (savedPower == null) { _state.value = _state.value.copy(error = "Tune: couldn't read the radio's power, so nothing was sent"); return@launch }
@@ -145,9 +146,18 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
             } finally {
                 withContext(kotlinx.coroutines.NonCancellable) {
                     runCatching { if (keyed) c.setPtt(false) }
-                    runCatching { if (st.mode.isNotEmpty() && st.mode != _state.value.mode) c.setMode(st.mode) }
+                    // the radio ignores commands for a moment after it drops out of transmit, so wait, then ask until the mode is really back
+                    if (keyed) delay(500)
+                    if (st.mode.isNotEmpty()) {
+                        repeat(4) {
+                            if (_state.value.mode == st.mode) return@repeat
+                            runCatching { c.setMode(st.mode) }
+                            delay(700)   // a poll runs about every 400 ms
+                        }
+                    }
                     runCatching { savedPower?.let { c.catString("PC$it;PC;") } }
-                    runCatching { savedWidth?.let { c.catString("$it;SH0;") } }
+                    // the width is refused while the radio is still in AM, so it goes after the mode
+                    runCatching { savedWidth?.let { w -> repeat(3) { n -> if (n == 0 || !c.catString("SH0;").contains(w)) { c.catString("$w;SH0;"); delay(300) } } } }
                     _carrierLeft.value = 0
                 }
             }
