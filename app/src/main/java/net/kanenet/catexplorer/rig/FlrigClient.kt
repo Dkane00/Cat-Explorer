@@ -157,6 +157,13 @@ class FlrigClient(host: String, port: Int) {
         }
     }
 
+    /**
+     * Writes one memory channel and reads it straight back in the same request. Returns what the radio now holds, or null if
+     * the read-back wasn't understood.
+     */
+    fun writeMemory(m: MemChannel): MemChannel? =
+        YaesuDsp.parseMemChannel(catString(YaesuDsp.memWrite(m) + "MT%03d;".format(m.ch)), m.ch)
+
     fun readCw(old: CwState): CwState = YaesuDsp.parseCw(catReads(YaesuDsp.CW_READS), old)
     fun readFm(old: FmState): FmState = YaesuDsp.parseFm(catReads(YaesuDsp.FM_READS), old)
     fun readVoice(old: VoiceState): VoiceState = YaesuDsp.parseVoice(catReads(YaesuDsp.VOICE_READS), old)

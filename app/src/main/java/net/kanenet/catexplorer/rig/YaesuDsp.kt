@@ -62,7 +62,11 @@ data class FmState(
 
 /** Voice memory (DVS): which of channels 1..5 is playing or recording, 0 = none. */
 /** One programmed memory channel, as read with MT. */
-data class MemChannel(val ch: Int, val hz: Long, val mode: String, val tone: String, val shift: String, val name: String)
+data class MemChannel(
+    val ch: Int, val hz: Long, val mode: String, val tone: String, val shift: String, val name: String,
+    // the raw codes behind the text above, kept so a channel can be written back unchanged apart from what was edited
+    val modeCode: Char = '2', val toneCode: Int = 0, val shiftCode: Int = 0, val clar: String = "+00000", val raw: String = "",
+)
 
 data class VoiceState(val playing: Int = 0, val recording: Int = 0)
 
@@ -190,6 +194,33 @@ object YaesuDsp {
             MEM_TONES.getOrElse(t[23].digitToIntOrNull() ?: 0) { "?" },
             when (t[26]) { '1' -> "+"; '2' -> "−"; else -> "" },
             name,
+            modeCode = t[21], toneCode = t[23].digitToIntOrNull() ?: 0, shiftCode = t[26].digitToIntOrNull() ?: 0,
+            clar = t.substring(14, 20), raw = t,
+        )
+    }
+
+    /** Modes the memory write accepts, as (code, label). */
+    val MEM_MODE_CHOICES: List<Pair<Char, String>> = listOf('1', '2', '3', '7', '4', 'B', '5', 'D', '8', 'C', '6', '9').map { it to MEM_MODES.getValue(it) }
+    /** Tone settings the memory write accepts: (code, label). */
+    val MEM_TONE_CHOICES = listOf(0 to "Off", 1 to "CTCSS T/R", 2 to "CTCSS enc")
+    val MEM_SHIFT_CHOICES = listOf(0 to "Simplex", 1 to "+", 2 to "−")
+
+    fun memLabels(m: MemChannel): MemChannel = m.copy(
+        mode = MEM_MODES[m.modeCode] ?: "?", tone = MEM_TONES.getOrElse(m.toneCode) { "?" },
+        shift = when (m.shiftCode) { 1 -> "+"; 2 -> "−"; else -> "" },
+    )
+
+    /**
+     * Tag characters the radio takes: printable ASCII, 12 at most. Written over CAT the radio stores every letter as lower case
+     * (and refuses the letter X), so what comes back can differ in case from what was sent.
+     */
+    fun cleanTag(s: String) = s.filter { it.code in 32..126 }.take(12)
+
+    /** MT set: writes frequency, mode, tone, shift and name of one regular channel (001-099). */
+    fun memWrite(m: MemChannel): String {
+        val tag = cleanTag(m.name)
+        return "MT%03d%09d%s0%c0%d00%d%d%s;".format(
+            m.ch, m.hz, m.clar, m.modeCode, m.toneCode, m.shiftCode, if (tag.isEmpty()) 0 else 1, tag.padEnd(12),
         )
     }
 

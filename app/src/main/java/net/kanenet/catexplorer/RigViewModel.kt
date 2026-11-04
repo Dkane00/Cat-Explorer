@@ -347,6 +347,41 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private val _memMessage = MutableStateFlow<String?>(null)
+    /** Outcome of the last memory write (or a failure), shown in the memory table. */
+    val memMessage = _memMessage.asStateFlow()
+    fun clearMemMessage() { _memMessage.value = null }
+    private var memBackedUp = false
+
+    /** Saves every channel read so far, as the radio reported it, to a text file before the first write of a session. Returns the path, or null if it couldn't be saved. */
+    private fun backupMemories(): String? = runCatching {
+        val dir = getApplication<Application>().getExternalFilesDir(null) ?: return null
+        val f = java.io.File(dir, "memory-backup-" + java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date()) + ".txt")
+        f.writeText(_memories.value.joinToString("\n") { it.raw })
+        f.absolutePath
+    }.getOrNull()
+
+    /** Writes one channel to the radio, then checks that the radio now holds what was sent. */
+    fun writeMemory(m: MemChannel) {
+        val c = client ?: return
+        if (_memScan.value >= 0) return
+        viewModelScope.launch {
+            if (!memBackedUp) {
+                val path = backupMemories()
+                if (path == null) { _memMessage.value = "Not written: the backup of your memories couldn't be saved first."; return@launch }
+                memBackedUp = true
+            }
+            pollPaused = true
+            val back = try { withContext(Dispatchers.IO) { runCatching { c.writeMemory(m) }.getOrNull() } } finally { pollPaused = false }
+            val sent = YaesuDsp.cleanTag(m.name)
+            val ok = back != null && back.hz == m.hz && back.modeCode == m.modeCode && back.toneCode == m.toneCode && back.shiftCode == m.shiftCode && back.name.equals(sent.trim(), ignoreCase = true)
+            if (back != null) _memories.value = (_memories.value.filter { it.ch != m.ch } + back).sortedBy { it.ch }
+            _memMessage.value = if (ok) "Channel %03d saved.".format(m.ch)
+                else if (back == null) "Channel %03d: the radio refused the write. Names can't contain the letter X.".format(m.ch)
+                else "Channel %03d: the radio doesn't hold what was sent (it may have refused part of it). Check the row.".format(m.ch)
+        }
+    }
+
     /** Moves the radio to a memory channel (switching to memory mode first if it is on a VFO). */
     fun selectMemory(ch: Int, inMemoryMode: Boolean) = send {
         if (!inMemoryMode) cat(YaesuDsp.vfoMemory())
