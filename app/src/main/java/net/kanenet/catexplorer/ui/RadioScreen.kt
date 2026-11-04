@@ -32,6 +32,19 @@ private val BANDS = listOf(
     "6" to 50_313_000L, "2" to 144_174_000L, "70cm" to 432_000_000L,
 )
 
+/**
+ * Where the Band button sends the radio: a phone calling / well-used frequency and its usual mode on each band, keyed by the
+ * same names as [BANDS]. 30 m has no phone allocation, so it gets its digital frequency and DATA-U. 60 m is channel 2's dial
+ * frequency (USB).
+ */
+private val BANDS_PHONE = listOf(
+    Triple("160", 1_900_000L, "LSB"), Triple("80", 3_900_000L, "LSB"), Triple("60", 5_346_500L, "USB"),
+    Triple("40", 7_200_000L, "LSB"), Triple("30", 10_136_000L, "DATA-U"), Triple("20", 14_300_000L, "USB"),
+    Triple("17", 18_130_000L, "USB"), Triple("15", 21_300_000L, "USB"), Triple("12", 24_950_000L, "USB"),
+    Triple("10", 28_400_000L, "USB"), Triple("6", 50_125_000L, "USB"), Triple("2", 146_520_000L, "FM"),
+    Triple("70cm", 446_000_000L, "FM"),
+)
+
 /** Amateur band edges in Hz, keyed by the same names as [BANDS]. */
 private val BAND_EDGES = listOf(
     "160" to (1_800_000L..2_000_000L), "80" to (3_500_000L..4_000_000L), "60" to (5_300_000L..5_410_000L),
@@ -184,9 +197,12 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
     @Composable fun Pickers() {
       val body: @Composable () -> Unit = {
             val band = bandOf(s.activeHz)
-            PickerButton("Band", bandLabel(band), BANDS.map { it.first }, band.orEmpty(), enabled = true) { name ->
-                BANDS.firstOrNull { it.first == name }?.let { (_, hz) ->
-                    vm.send { if (activeB) setVfoB(hz.toDouble()) else setVfoA(hz.toDouble()) }
+            PickerButton("Band", bandLabel(band), BANDS_PHONE.map { it.first }, band.orEmpty(), enabled = true) { name ->
+                BANDS_PHONE.firstOrNull { it.first == name }?.let { (_, hz, mode) ->
+                    vm.send {
+                        if (activeB) setVfoB(hz.toDouble()) else setVfoA(hz.toDouble())
+                        if (mode in s.modes) setMode(mode)   // skip it if this connection doesn't use that mode name
+                    }
                 }
             }
             PickerButton("Mode", s.mode.ifEmpty { "—" }, s.modes, s.mode) { m -> vm.send { setMode(m) } }
@@ -432,7 +448,7 @@ private val PCT_TICKS = (0..4).map { Tick(it * 25, "${it * 25}") }
 @Composable
 private fun ControlsPanel(s: RigState, vm: RigViewModel) {
     Card(Modifier.fillMaxWidth()) {
-        s.volume?.let { SliderRow("AF", it, 0..100) { v -> vm.send { setVolume(v) } } }
+        s.volume?.let { SliderRow("VOL", it, 0..100) { v -> vm.send { setVolume(v) } } }
         s.rfGain?.let { SliderRow("RF", it, 0..100) { v -> vm.send { setRfGain(v) } } }
         s.micGain?.let { SliderRow("MIC", it, 0..100) { v -> vm.send { setMicGain(v) } } }
         // the FT-891 takes 5-100 W over CAT
