@@ -70,19 +70,45 @@ private fun OnOffButton(label: String, on: Boolean, enabled: Boolean, onToggle: 
     else OutlinedButton({ onToggle(true) }, mod, enabled = enabled, contentPadding = PaddingValues(0.dp)) { Text(label, fontSize = 15.sp) }
 }
 
-/** Slider on the radio's own units. Sends on release; follows the radio otherwise. */
+/**
+ * Slider on the radio's own units. Sends on release; follows the radio otherwise. The arrows at either end move the value by
+ * one [unit] per tap (the smallest step the radio accepts for that setting).
+ */
 @Composable
-private fun PanelSlider(value: Int, range: IntRange, enabled: Boolean, display: String, modifier: Modifier = Modifier, steps: Int = 0, onSet: (Int) -> Unit) {
+private fun PanelSlider(value: Int, range: IntRange, enabled: Boolean, display: String, modifier: Modifier = Modifier, steps: Int = 0, unit: Int = 1, onSet: (Int) -> Unit) {
     var dragging by remember { mutableStateOf(false) }
     var local by remember { mutableFloatStateOf(value.toFloat()) }
-    LaunchedEffect(value) { if (!dragging) local = value.toFloat() }
+    // after a change, keep showing it for a moment: a radio reply that was already on its way would otherwise put the old value back
+    var holdUntil by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(value, holdUntil) {
+        if (dragging) return@LaunchedEffect
+        val wait = holdUntil - System.currentTimeMillis()
+        if (wait > 0) delay(wait)
+        if (!dragging) local = value.toFloat()
+    }
+    fun step(dir: Int) {
+        val v = ((Math.round(local / unit) + dir) * unit).coerceIn(range.first, range.last)
+        if (v != local.toInt()) { local = v.toFloat(); holdUntil = System.currentTimeMillis() + 1500; onSet(v) }
+    }
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        ArrowButton("◀", enabled) { step(-1) }
         Slider(
             local, { dragging = true; local = it }, Modifier.weight(1f), enabled = enabled,
             valueRange = range.first.toFloat()..range.last.toFloat(), steps = steps,
-            onValueChangeFinished = { dragging = false; onSet(local.toInt()) },
+            onValueChangeFinished = { dragging = false; holdUntil = System.currentTimeMillis() + 1500; onSet(local.toInt()) },
         )
+        ArrowButton("▶", enabled) { step(1) }
         Text(display, Modifier.width(96.dp).padding(start = 8.dp), fontSize = 15.sp, color = if (enabled) Color.Unspecified else DIM)
+    }
+}
+
+@Composable
+private fun ArrowButton(symbol: String, enabled: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick, enabled = enabled, color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.small,
+        modifier = Modifier.size(36.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) { Text(symbol, fontSize = 16.sp, color = if (enabled) Color.Unspecified else DIM) }
     }
 }
 
@@ -285,7 +311,7 @@ fun DspDialog(vm: RigViewModel, onClose: () -> Unit) {
         Spacer(Modifier.height(6.dp))
 
         DspRow({ OnOffButton("SHIFT", d.ifShiftOn, ok) { vm.setDsp(YaesuDsp.ifShift(it, d.ifShift)) { copy(ifShiftOn = it) } } }) {
-            PanelSlider(d.ifShift, -1200..1200, ok && d.ifShiftOn, "${if (d.ifShift >= 0) "+" else ""}${d.ifShift} Hz", Modifier.weight(1f)) { v ->
+            PanelSlider(d.ifShift, -1200..1200, ok && d.ifShiftOn, "${if (d.ifShift >= 0) "+" else ""}${d.ifShift} Hz", Modifier.weight(1f), unit = 20) { v ->
                 vm.setDsp(YaesuDsp.ifShift(d.ifShiftOn, v)) { copy(ifShift = v / 20 * 20) }
             }
         }
@@ -315,7 +341,7 @@ fun DspDialog(vm: RigViewModel, onClose: () -> Unit) {
             PanelSlider(menu.contourWidth, 1..11, ok && d.contourOn, "${menu.contourWidth}", Modifier.weight(1f)) { v -> vm.setDspMenu(YaesuDsp.contourWidth(v)) { copy(contourWidth = v) } }
         }
         DspRow({ OnOffButton("NOTCH", d.notchOn, ok) { vm.setDsp(YaesuDsp.notch(it)) { copy(notchOn = it) } } }) {
-            PanelSlider(d.notchHz, 10..3200, ok && d.notchOn, "${d.notchHz} Hz", Modifier.weight(1f)) { v -> vm.setDsp(YaesuDsp.notchFreq(v)) { copy(notchHz = v / 10 * 10) } }
+            PanelSlider(d.notchHz, 10..3200, ok && d.notchOn, "${d.notchHz} Hz", Modifier.weight(1f), unit = 10) { v -> vm.setDsp(YaesuDsp.notchFreq(v)) { copy(notchHz = v / 10 * 10) } }
         }
         DspRow({ Text("Notch width", Modifier.width(112.dp), fontSize = 13.sp, color = DIM) }) {
             FilterChip(!menu.notchWide, { vm.setDspMenu(YaesuDsp.notchWidth(false)) { copy(notchWide = false) } }, { Text("Narrow") })
@@ -328,7 +354,7 @@ fun DspDialog(vm: RigViewModel, onClose: () -> Unit) {
             }
         }
         if (cw) DspRow({ OnOffButton("APF", d.apfOn, ok) { vm.setDsp(YaesuDsp.apf(it)) { copy(apfOn = it) } } }) {
-            PanelSlider(d.apfHz, -250..250, ok && d.apfOn, "${if (d.apfHz >= 0) "+" else ""}${d.apfHz} Hz", Modifier.weight(1f)) { v -> vm.setDsp(YaesuDsp.apfFreq(v)) { copy(apfHz = v / 10 * 10) } }
+            PanelSlider(d.apfHz, -250..250, ok && d.apfOn, "${if (d.apfHz >= 0) "+" else ""}${d.apfHz} Hz", Modifier.weight(1f), unit = 10) { v -> vm.setDsp(YaesuDsp.apfFreq(v)) { copy(apfHz = v / 10 * 10) } }
         }
         DspRow({ OnOffButton("DNF", d.autoNotch, ok) { vm.setDsp(YaesuDsp.autoNotch(it)) { copy(autoNotch = it) } } }) {
             Text("Auto notch", fontSize = 13.sp, color = DIM)
