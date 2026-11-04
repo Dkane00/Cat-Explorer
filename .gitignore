@@ -7,3 +7,4 @@ local.properties
 *.keystore
 .kotlin/
 ab2.png
+release/
