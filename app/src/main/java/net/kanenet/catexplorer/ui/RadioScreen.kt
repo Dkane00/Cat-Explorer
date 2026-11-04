@@ -119,9 +119,10 @@ fun RadioScreen(vm: RigViewModel, onSettings: () -> Unit) {
             StatusBar(s, onConsole = { showConsole = !showConsole }, onSettings = onSettings, onDisconnect = vm::disconnect)
         }
         var tab by remember { mutableIntStateOf(0) }
-        Card(Modifier.fillMaxWidth()) {
-            // FLRig's user buttons only exist when FLRig is in the loop
-            val tabs = if (s.directUsb) listOf("Bands", "CW") else listOf("Bands", "CW", "FLRig buttons")
+        // the digital-mode band shortcuts, FLRig's CW keyer and FLRig's user buttons all belong to the FLRig connection;
+        // over USB there is no PC running digital modes and no FLRig, so the card is left out
+        if (!s.directUsb) Card(Modifier.fillMaxWidth()) {
+            val tabs = listOf("Bands", "CW", "FLRig buttons")
             TabRow(tab.coerceAtMost(tabs.lastIndex), containerColor = Color.Transparent) {
                 tabs.forEachIndexed { i, t -> Tab(tab == i, { tab = i }, text = { Text(t) }) }
             }
@@ -129,7 +130,7 @@ fun RadioScreen(vm: RigViewModel, onSettings: () -> Unit) {
             when (tab) {
                 0 -> BandPanel(vm)
                 1 -> CwPanel(vm)
-                else -> if (s.directUsb) CwPanel(vm) else UserButtonPanel(vm)
+                else -> UserButtonPanel(vm)
             }
         }
         if (showConsole) ConsolePanel(vm)

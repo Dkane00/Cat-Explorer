@@ -9,7 +9,7 @@ A touchscreen controller for the **Yaesu FT-891** HF transceiver, for Android ta
 
 ## What it does
 
-- **Live readout and control**: frequency (tap to type one in), VFO A/B, split, mode, band, filter width, IPO/ATT, dial lock, press-and-hold PTT.
+- **Live readout and control**: frequency (tap to type one in), VFO A/B, split, mode, band, filter width, IPO/ATT and dial lock.
 - **Meters**: S, power, SWR, ALC, compression and drain current, as bars or analogue needle gauges, plus a rolling signal-history trace.
 - **Sliders**: volume, RF gain, mic gain and TX power, with ◀ ▶ arrows for single steps.
 - **DSP and IF popup** (tap the DSP graph): IF shift, width, noise blanker and reduction, contour, notch, APF and AGC. A mic EQ and speech-processor popup is available from the MIC EQ graph.
@@ -36,7 +36,7 @@ Run FLRig on the computer the radio is plugged into. In FLRig turn on the XML-RP
 
 ## Safety
 
-This app can **transmit**. PTT, Tune and the carrier mode key the radio. Check that your antenna is connected and use low power when trying new things. The Tune carrier is limited to 5 to 10 W and stops by itself after one minute.
+This app can **transmit**. The Tune button, the CW keyer memories and voice-message playback key the radio. Check that your antenna is connected and use low power when trying new things. The Tune carrier is limited to 5 to 10 W and stops by itself after one minute.
 
 ## Build
 
