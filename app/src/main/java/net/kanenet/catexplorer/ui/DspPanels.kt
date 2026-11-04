@@ -323,7 +323,7 @@ fun DspDialog(vm: RigViewModel, onClose: () -> Unit) {
             DspRow({ OnOffButton("NAR", d.narrow, ok) { vm.setDsp(YaesuDsp.narrow(it)) { copy(narrow = it) } } }) {
                 Text("WIDTH", Modifier.width(60.dp), fontSize = 13.sp, color = DIM)
                 PanelSlider(pos, 0..(idxs.size - 1).coerceAtLeast(1), ok, "${widthHz ?: "—"} Hz", Modifier.weight(1f), steps = (idxs.size - 2).coerceAtLeast(0)) { p ->
-                    idxs.getOrNull(p)?.let { idx -> vm.setDsp(YaesuDsp.width(d.widthP2, idx)) { copy(widthIdx = idx) } }
+                    idxs.getOrNull(p)?.let { idx -> vm.setDsp(YaesuDsp.width(1, idx)) { copy(widthIdx = idx) } }
                 }
             }
         }

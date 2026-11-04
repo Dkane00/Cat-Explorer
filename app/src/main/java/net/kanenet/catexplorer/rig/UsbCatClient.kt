@@ -30,7 +30,11 @@ class UsbCatClient(private val port: UsbSerialPort) : RigClient, Closeable {
 
     /** Throws away anything the radio sent that nobody asked for (late replies, "?;"). */
     private fun drain() {
-        repeat(8) { if (port.read(buf, 2) <= 0) return }
+        repeat(8) {
+            val n = port.read(buf, 2)
+            if (n <= 0) return
+            Log.d(TAG, "RX (unasked) " + String(buf, 0, n, Charsets.US_ASCII))
+        }
     }
 
     /**
@@ -229,7 +233,7 @@ class UsbCatClient(private val port: UsbSerialPort) : RigClient, Closeable {
     override fun setBandwidth(bw: Int) {
         val group = YaesuDsp.modeGroup(YaesuDsp.modeLabel(modeCode) ?: return)
         val idx = YaesuDsp.widthTable(group, narrow).entries.firstOrNull { it.value == bw }?.key ?: return
-        cat(YaesuDsp.width(if (narrow) 1 else 0, idx))
+        cat(YaesuDsp.width(1, idx))   // P2 = 1 switches the radio's WIDTH function on; with 0 it ignores the new width
     }
     override fun setActiveVfo(ab: String) { cat(if (ab == "B") "VS1;" else "VS0;") }
     override fun setSplit(on: Boolean) { cat(if (on) "ST1;" else "ST0;") }

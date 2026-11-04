@@ -21,7 +21,7 @@ data class DspState(
     val ifShiftOn: Boolean = false,
     val ifShift: Int = 0,          // -1200..+1200 Hz, 20 Hz steps
     val widthIdx: Int = 0,         // SH index; see [YaesuDsp.widthTable]
-    val widthP2: Int = 1,          // the SH command's second digit, echoed back when we change the width
+    val widthP2: Int = 1,          // the SH command's second digit: the radio's WIDTH function, 0 = off (width changes ignored), 1 = on
     val keyPitchHz: Int = 700,     // CW pitch; centres the CW passband
     val apfHz: Int = 0,            // -250..+250 Hz
     val lockOn: Boolean = false,     // VFO dial lock
@@ -326,6 +326,7 @@ object YaesuDsp {
     fun lock(on: Boolean) = "LK${b(on)};"
     fun preamp(amp: Boolean) = "PA0${b(amp)};"
     fun att(on: Boolean) = "RA0${b(on)};"
+    /** p2 = 1 turns the radio's WIDTH function on, which a width change needs; with 0 the radio ignores the index. */
     fun width(p2: Int, idx: Int) = f("SH0%d%02d;", p2.coerceIn(0, 1), idx.coerceIn(0, 21))
     fun apfFreq(hz: Int) = f("CO03%04d;", ((hz.coerceIn(-250, 250) + 250) / 10))
     fun narrow(on: Boolean) = "NA0${b(on)};"
