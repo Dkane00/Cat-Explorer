@@ -4,6 +4,8 @@ A touchscreen controller for the **Yaesu FT-891** HF transceiver, for Android ta
 
 ![Cat Explorer main screen, connected to an FT-891 over USB](docs/screenshot-main.png)
 
+**New to the app? Read the [User Guide (PDF)](docs/Cat-Explorer-User-Guide.pdf).** It covers connecting to the radio, every screen and button, and all of the settings, with screenshots.
+
 > **Radio support: FT-891 only, for now.**
 > Most of the CAT (Computer Aided Transceiver) commands in this app are written for the FT-891 and its CAT manual: the DSP and filter settings, meter scales, memory channels, filter-width table and the like. Other Yaesu radios use different commands and ranges, and other brands use different protocols altogether. The app has only been tested on an FT-891. Support for other radios may come but I am limited to the radios that I have to test.
 
