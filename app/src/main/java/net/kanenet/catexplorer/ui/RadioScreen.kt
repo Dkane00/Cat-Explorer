@@ -190,7 +190,11 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
                 }
             }
             PickerButton("Mode", s.mode.ifEmpty { "—" }, s.modes, s.mode) { m -> vm.send { setMode(m) } }
-            PickerButton("BW", if (s.bandwidth.isEmpty()) "—" else "${s.bandwidth} Hz", s.bandwidths, s.bandwidth) { b ->
+            // FLRig's bandwidth value goes stale when the radio changes it itself (memory recall, band change), so on a Yaesu
+            // the width comes from the radio's own SH answer, the same source the DSP graph uses
+            val radioWidth = if (FlrigClient.supportsYaesuDsp(s.xcvr)) YaesuDsp.widthTable(YaesuDsp.modeGroup(s.mode), d.narrow)[d.widthIdx]?.toString() else null
+            val bwNow = radioWidth ?: s.bandwidth
+            PickerButton("BW", if (bwNow.isEmpty()) "—" else "$bwNow Hz", s.bandwidths, bwNow) { b ->
                 b.toIntOrNull()?.let { vm.send { setBandwidth(it) } }
             }
             if (FlrigClient.supportsYaesuDsp(s.xcvr)) {
