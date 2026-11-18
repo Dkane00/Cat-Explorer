@@ -104,7 +104,7 @@ fun RadioScreen(vm: RigViewModel, onSettings: () -> Unit) {
 
     Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         FrequencyPanel(s, vm)
-        HistoryCard(vm)
+        HistoryCard(s, vm)
         if (wide) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 MeterPanel(s, analog, Modifier.weight(1f))
@@ -146,9 +146,28 @@ private fun Card(modifier: Modifier = Modifier, content: @Composable ColumnScope
 }
 
 @Composable
-private fun HistoryCard(vm: RigViewModel) {
+private fun HistoryCard(s: RigState, vm: RigViewModel) {
     val history by vm.history.collectAsState()
-    Card(Modifier.fillMaxWidth()) { HistoryPanel(history) }
+    val waterfallOn by vm.waterfallOn.collectAsState()
+    // the waterfall needs the radio's audio, which only reaches the tablet from the FLRig PC's audio helper, so USB shows history only
+    val showWaterfall = waterfallOn && !s.directUsb
+    val th = LocalThemeSettings.current
+    @Composable fun Tab(label: String, selected: Boolean, onClick: () -> Unit) = Text(
+        label, fontSize = 12.sp,
+        color = if (selected) th[ThemeColor.ACCENT] else th[ThemeColor.LABEL],
+        fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold else null,
+        textDecoration = if (selected) androidx.compose.ui.text.style.TextDecoration.Underline else null,
+        modifier = Modifier.clip(RoundedCornerShape(4.dp)).clickable(onClick = onClick).padding(horizontal = 4.dp, vertical = 4.dp),
+    )
+    val tabs: @Composable RowScope.() -> Unit = {
+        Tab("Signal history", !showWaterfall) { vm.setWaterfallOn(false) }
+        if (!s.directUsb) Tab("Waterfall", showWaterfall) { vm.setWaterfallOn(true) }
+    }
+    // signal history keeps its original height; on the waterfall tab the card grows to fit the full-height waterfall
+    Card(Modifier.fillMaxWidth().then(if (showWaterfall) Modifier else Modifier.height(121.dp))) {
+        if (showWaterfall) WaterfallPanel(s, vm, Modifier.fillMaxWidth(), header = tabs)
+        else HistoryPanel(history, Modifier.fillMaxSize(), header = tabs)
+    }
 }
 
 @Composable

@@ -79,6 +79,22 @@ private fun SettingsList(vm: RigViewModel, theme: ThemeSettings, onClose: () -> 
             }
             Text("Bar is the straight level bars; Meter is round needle gauges.", fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp))
             Spacer(Modifier.height(8.dp))
+            SectionTitle("Waterfall")
+            val audioPort by vm.audioPort.collectAsState()
+            var portText by remember(audioPort) { mutableStateOf(audioPort.toString()) }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    portText, { portText = it.filter(Char::isDigit).take(5) }, label = { Text("Audio helper port") }, singleLine = true,
+                    modifier = Modifier.width(180.dp),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                )
+                TextButton({ portText.toIntOrNull()?.takeIf { it in 1..65535 }?.let { vm.setAudioPort(it) } }, enabled = portText != audioPort.toString()) { Text("Save") }
+            }
+            Text(
+                "The waterfall gets the radio's audio from cat-audio-server.py on the same PC as FLRig (default port 7366).",
+                fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp),
+            )
+            Spacer(Modifier.height(8.dp))
             SectionTitle("Tune button")
             val carrier by vm.tuneCarrier.collectAsState()
             val tuneW by vm.tunePowerW.collectAsState()

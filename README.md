@@ -36,6 +36,19 @@ Plug the radio's USB port into the tablet with a USB-C OTG cable. In the app, en
 
 Run FLRig on the computer the radio is plugged into. In FLRig turn on the XML-RPC server (Config → Setup → UI → Server), make sure it listens on the network and not only on localhost, and allow its port (default 12345) through the PC's firewall. In the app, enter the PC's address and port and tap **Connect**. The tablet and the PC must be on the same network or VPN.
 
+### Waterfall (FLRig connection only)
+
+The radio screen has a **Waterfall** card that shows the radio's receive audio, about 0 to 4 kHz: everything inside your current filter. Tap a signal to tune to it. In CW the signal goes onto your CW pitch, in DATA it goes to 1500 Hz, and in SSB the point you tap becomes the carrier (tap the low edge of a USB voice signal). **Listen** also plays the audio on the tablet.
+
+The FT-891 has no wide band-scope output, so this is a passband waterfall, not a wide panadapter. The audio comes from a small helper on the FLRig PC that records the sound card wired to the radio's DATA jack:
+
+```bash
+python3 pc-helper/cat-audio-server.py --list     # show the sound inputs
+python3 pc-helper/cat-audio-server.py            # picks the USB sound card by itself; or add --device NAME
+```
+
+It needs only Python 3 and `parec` (PulseAudio/PipeWire) or `arecord`. It listens on port 7366 (change it with `--port`, and in the app's Settings). It has no password, so keep it on your home network or VPN like FLRig's port. If the card says "Audio too loud", turn the sound card's input level down on the PC. It is off in USB mode because the tablet can't get the radio's audio over the USB cable.
+
 ## Safety
 
 This app can **transmit**. The Tune button, the CW keyer memories and voice-message playback key the radio. Check that your antenna is connected and use low power when trying new things. The Tune carrier is limited to 5 to 10 W and stops by itself after one minute.
@@ -59,13 +72,15 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - `rig/FlrigClient.kt` and `rig/XmlRpc.kt`: the FLRig connection (a small XML-RPC client).
 - `rig/UsbCatClient.kt` and `rig/UsbLink.kt`: the direct USB connection (CAT over the radio's CP2105 serial bridge, using the [usb-serial-for-android](https://github.com/mik3y/usb-serial-for-android) library).
 - `rig/YaesuDsp.kt`: FT-891 CAT command strings and reply parsers.
+- `audio/`: the waterfall: `AudioLink.kt` (the stream from the PC helper, and Listen playback) and `Waterfall.kt` (FFT, waterfall rows, tap-to-tune maths).
+- `pc-helper/cat-audio-server.py`: the PC side of the waterfall.
 - `RigViewModel.kt`: the polling loop and command dispatch.
 - `ui/`: connect screen, radio screen, meters, DSP and memory panels, settings.
 
 ## Status and limits
 
 - Tested on an FT-891 with a Samsung Galaxy Tab S6 Lite (Android 16). The FLRig path has had the most use. The USB path is newer: reading the radio, width changes, the A/B swap, Tune and the Band button have been tested over USB, while other controls have had less testing there.
-- The radio's spectrum scope can't be shown because the FT-891 doesn't send scope data over CAT.
+- The radio's spectrum scope can't be shown because the FT-891 doesn't send scope data over CAT. The waterfall shows only the receive passband (see above).
 - The radio can't store a filter width in a memory channel over CAT.
 - Meter scales (especially SWR and S) are approximations.
 

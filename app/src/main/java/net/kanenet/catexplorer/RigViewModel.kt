@@ -330,6 +330,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
 
     fun disconnect() {
         stopCarrier()
+        stopWaterfall()
         pollJob?.cancel(); pollJob = null; client = null; pollPaused = false
         _history.value = emptyList()
         _state.value = RigState()
@@ -420,6 +421,104 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
     fun selectMemory(ch: Int, inMemoryMode: Boolean) = send {
         if (!inMemoryMode) cat(YaesuDsp.vfoMemory())
         cat("MC%03d;".format(ch))
+    }
+
+    // ---- Waterfall (receive audio from the PC's audio helper) ----
+    private val _audioPort = MutableStateFlow(prefs.getInt("audio_port", net.kanenet.catexplorer.audio.AUDIO_DEFAULT_PORT))
+    val audioPort = _audioPort.asStateFlow()
+    fun setAudioPort(p: Int) {
+        _audioPort.value = p; prefs.edit().putInt("audio_port", p).apply()
+        if (_waterfallOn.value) { stopWaterfall(); startWaterfall() }
+    }
+
+    private val _waterfallOn = MutableStateFlow(prefs.getBoolean("waterfall_on", false))
+    val waterfallOn = _waterfallOn.asStateFlow()
+    private val _listen = MutableStateFlow(false)
+    /** Also play the radio's audio on the tablet. Always starts off. */
+    val listen = _listen.asStateFlow()
+    fun setListen(on: Boolean) { _listen.value = on }
+
+    private val _waterfallRange = MutableStateFlow(prefs.getInt("waterfall_range", 45))
+    /** Colour range in dB: smaller shows weak signals brighter. */
+    val waterfallRange = _waterfallRange.asStateFlow()
+    fun setWaterfallRange(db: Int) {
+        _waterfallRange.value = db.coerceIn(20, 80); prefs.edit().putInt("waterfall_range", _waterfallRange.value).apply()
+        engine?.rangeDb = _waterfallRange.value.toFloat()
+    }
+
+    /** "" while running normally; otherwise what's wrong (no helper, connecting…). */
+    private val _waterfallStatus = MutableStateFlow("")
+    val waterfallStatus = _waterfallStatus.asStateFlow()
+    /** Goes up by one for every new waterfall row, so the screen knows to redraw. */
+    private val _waterfallFrame = MutableStateFlow(0)
+    val waterfallFrame = _waterfallFrame.asStateFlow()
+    @Volatile var engine: net.kanenet.catexplorer.audio.WaterfallEngine? = null
+        private set
+    private var waterfallJob: Job? = null
+    @Volatile private var audioLink: net.kanenet.catexplorer.audio.AudioLink? = null
+
+    fun setWaterfallOn(on: Boolean) {
+        _waterfallOn.value = on; prefs.edit().putBoolean("waterfall_on", on).apply()
+        if (on) startWaterfall() else stopWaterfall()
+    }
+
+    /** Called by the screen when the waterfall card is showing; does nothing if already running. */
+    fun startWaterfall() {
+        if (!_waterfallOn.value || waterfallJob?.isActive == true) return
+        waterfallJob = viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                val host = _host.value.trim()
+                _waterfallStatus.value = "Connecting to the audio helper…"
+                val link = net.kanenet.catexplorer.audio.AudioLink(host, _audioPort.value).also { audioLink = it }
+                try {
+                    link.open()
+                    val e = engine?.takeIf { it.binHz == link.rate / 2048.0 }
+                        ?: net.kanenet.catexplorer.audio.WaterfallEngine(link.rate).also { engine = it }
+                    e.rangeDb = _waterfallRange.value.toFloat()
+                    _waterfallStatus.value = ""
+                    var lastDial = _state.value.activeHz
+                    var lastMode = _state.value.mode
+                    link.pump({ isActive }, { _listen.value }) { buf, n ->
+                        val st = _state.value
+                        // a blank reading (a poll that failed) must not wipe the picture
+                        if (st.mode.isNotEmpty() && st.mode != lastMode) { e.clear(); lastMode = st.mode; lastDial = st.activeHz }
+                        else if (st.activeHz > 0 && st.activeHz != lastDial) {
+                            val sign = net.kanenet.catexplorer.audio.TuneMath.sense(st.mode).sign
+                            if (lastDial == 0L) Unit
+                            else if (sign == 0) e.clear() else e.shift((-sign * (st.activeHz - lastDial) / e.binHz).toInt())
+                            lastDial = st.activeHz
+                        }
+                        if (e.add(buf, n, frozen = st.ptt)) _waterfallFrame.value++
+                    }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    _waterfallStatus.value = e.message ?: "Audio connection lost"
+                } finally {
+                    link.close()
+                }
+                delay(3000)   // try again: the helper may simply not be started yet
+            }
+        }
+    }
+
+    fun stopWaterfall() {
+        waterfallJob?.cancel(); waterfallJob = null
+        audioLink?.close(); audioLink = null   // unblocks a read that is waiting on the network
+        _waterfallStatus.value = ""
+    }
+
+    /**
+     * A tap on the waterfall at [audioHz]: tunes so that signal lands where the mode wants it — on the CW pitch (snapping to
+     * the strongest tone nearby), at 1500 Hz in DATA, or with the tapped point as the carrier in SSB.
+     */
+    fun waterfallTap(audioHz: Double) {
+        val st = _state.value
+        val e = engine ?: return
+        val pitch = _dsp.value.keyPitchHz
+        val hz = if (st.mode.startsWith("CW")) e.peakNear(audioHz, 60.0) else audioHz
+        val dial = net.kanenet.catexplorer.audio.TuneMath.retune(hz, st.activeHz, st.mode, pitch) ?: return
+        send { setFrequency(dial.toDouble()) }
     }
 
     override fun onCleared() { disconnect() }
