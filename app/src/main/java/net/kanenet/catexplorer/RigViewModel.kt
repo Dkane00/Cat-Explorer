@@ -447,6 +447,16 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         wide?.rangeDb = _waterfallRange.value.toFloat()
     }
 
+    private val _waterfallTheme = MutableStateFlow(net.kanenet.catexplorer.audio.WaterfallThemes.named(prefs.getString("waterfall_theme", null)).name)
+    /** Name of the waterfall colour theme (see WaterfallThemes). */
+    val waterfallTheme = _waterfallTheme.asStateFlow()
+    fun setWaterfallTheme(name: String) { _waterfallTheme.value = name; prefs.edit().putString("waterfall_theme", name).apply() }
+
+    private val _bandEdges = MutableStateFlow(prefs.getBoolean("band_edges", true))
+    /** Draw the US band and license-class edges on the waterfall. */
+    val bandEdges = _bandEdges.asStateFlow()
+    fun setBandEdges(on: Boolean) { _bandEdges.value = on; prefs.edit().putBoolean("band_edges", on).apply() }
+
     /** Spans the SDR view can show, in Hz. */
     val wideSpans = listOf(10_000, 20_000, 50_000, 100_000, 200_000)
     private val _wideSpan = MutableStateFlow(prefs.getInt("wide_span", 200_000).let { if (it in wideSpans) it else 200_000 })

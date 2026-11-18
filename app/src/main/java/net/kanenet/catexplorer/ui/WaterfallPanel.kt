@@ -9,12 +9,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -24,7 +27,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import net.kanenet.catexplorer.RigViewModel
+import net.kanenet.catexplorer.audio.BandPlan
 import net.kanenet.catexplorer.audio.Sense
+import net.kanenet.catexplorer.audio.WaterfallThemes
 import net.kanenet.catexplorer.audio.TuneMath
 import net.kanenet.catexplorer.rig.RigState
 
@@ -43,6 +48,9 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
     val dsp by vm.dsp.collectAsState()
     val wideMode by vm.wideMode.collectAsState()
     val span by vm.wideSpan.collectAsState()
+    val themeName by vm.waterfallTheme.collectAsState()
+    val edgesOn by vm.bandEdges.collectAsState()
+    val palette = WaterfallThemes.named(themeName).colors
     val e = vm.engine
     val w = vm.wide
 
@@ -81,7 +89,7 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
             }
         }
         if (wideMode && w != null) {
-            WideView(s, vm, w, frame)
+            WideView(s, vm, w, frame, palette, edgesOn)
             return@Column
         }
         if (e == null) {
@@ -95,6 +103,7 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
         }
 
         val bitmap = remember(e) { Bitmap.createBitmap(e.width, e.height, Bitmap.Config.ARGB_8888) }
+        val argb = remember(e) { IntArray(e.width * e.height) }
         val image = remember(bitmap) { bitmap.asImageBitmap() }
         val measurer = rememberTextMeasurer()
         val labelStyle = TextStyle(fontSize = 10.sp, color = th[ThemeColor.LABEL])
@@ -102,22 +111,27 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
         val accent = th[ThemeColor.ACCENT]
 
         Canvas(
-            Modifier.fillMaxWidth().height(230.dp).padding(top = 4.dp).pointerInput(e, sense) {
+            Modifier.fillMaxWidth().height(if (edgesOn && sense != Sense.NONE) (230 + STRIP_ROWS_DP).dp else 230.dp).padding(top = 4.dp).pointerInput(e, sense) {
                 if (sense != Sense.NONE) detectTapGestures { p -> vm.waterfallTap(p.x.toDouble() / size.width * e.maxHz) }
             },
         ) {
             frame   // redraw on every new row
             val specH = size.height * 0.25f
             val axisH = 14.dp.toPx()
-            val wfTop = specH
-            val wfH = size.height - specH - axisH
+            // RF of an audio tone and back, for the band edges (none in AM/FM, where there's no simple mapping)
+            val tone = TuneMath.dialTone(s.mode, pitch)
+            val showEdges = edgesOn && sense != Sense.NONE && s.activeHz > 0
+            val stripH = if (showEdges) STRIP_ROWS_DP.dp.toPx() else 0f
+            val wfTop = specH + stripH
+            val wfH = size.height - wfTop - axisH
             fun xOf(hz: Double) = (hz / e.maxHz * size.width).toFloat()
 
             // spectrum trace
             drawRect(th[ThemeColor.GRAPH_BG], size = androidx.compose.ui.geometry.Size(size.width, specH))
             val path = Path()
+            e.paint(argb, palette)
+            bitmap.setPixels(argb, 0, e.width, 0, 0, e.width, e.height)
             synchronized(e.lock) {
-                bitmap.setPixels(e.pixels, 0, e.width, 0, 0, e.width, e.height)
                 for (x in 0 until e.width) {
                     val px = (x + 0.5f) / e.width * size.width
                     val py = specH * (1f - (e.trace[x] / e.rangeDb).coerceIn(0f, 1f))
@@ -141,6 +155,13 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
                 val m = measurer.measure(label, labelStyle)
                 drawText(m, topLeft = Offset(x - m.size.width / 2f, size.height - axisH + 1f))
             }
+            if (showEdges) {
+                val rfA = s.activeHz + sense.sign * (0.0 - tone); val rfB = s.activeHz + sense.sign * (e.maxHz - tone.toDouble())
+                drawBandPlan(
+                    minOf(rfA, rfB), maxOf(rfA, rfB), { rf -> xOf(tone + sense.sign * (rf - s.activeHz)) },
+                    specH, wfTop + wfH, measurer, labelStyle,
+                )
+            }
             // where a tap sends a signal
             if (sense != Sense.NONE && target > 0) {
                 val x = xOf(target.toDouble())
@@ -156,14 +177,18 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
             } + if (s.ptt) "  Paused while transmitting." else "",
             fontSize = 11.sp, lineHeight = 13.sp, maxLines = 1, color = th[ThemeColor.LABEL],
         )
+        if (edgesOn && sense != Sense.NONE) BandLegend()
     }
 }
 
 /** The RTL-SDR view: real RF frequencies around the dial, the filter passband shaded, tap a signal to tune to it. */
 @Composable
-private fun WideView(s: RigState, vm: RigViewModel, w: net.kanenet.catexplorer.audio.WideEngine, frame: Int) {
+private fun WideView(
+    s: RigState, vm: RigViewModel, w: net.kanenet.catexplorer.audio.WideEngine, frame: Int, palette: IntArray, edgesOn: Boolean,
+) {
     val th = LocalThemeSettings.current
     val bitmap = remember(w) { Bitmap.createBitmap(w.width, w.height, Bitmap.Config.ARGB_8888) }
+    val argb = remember(w) { IntArray(w.width * w.height) }
     val image = remember(bitmap) { bitmap.asImageBitmap() }
     val measurer = rememberTextMeasurer()
     val labelStyle = TextStyle(fontSize = 10.sp, color = th[ThemeColor.LABEL])
@@ -172,14 +197,16 @@ private fun WideView(s: RigState, vm: RigViewModel, w: net.kanenet.catexplorer.a
     val bwHz = Regex("\\d+").find(s.bandwidth)?.value?.toIntOrNull()
 
     Canvas(
-        Modifier.fillMaxWidth().height(230.dp).padding(top = 4.dp).pointerInput(w) {
+        Modifier.fillMaxWidth().height(if (edgesOn) (230 + STRIP_ROWS_DP).dp else 230.dp).padding(top = 4.dp).pointerInput(w) {
             detectTapGestures { p -> vm.wideTap(p.x.toDouble() / size.width * w.width) }
         },
     ) {
         frame   // redraw on every new row
         val specH = size.height * 0.25f
         val axisH = 14.dp.toPx()
-        val wfH = size.height - specH - axisH
+        val stripH = if (edgesOn) STRIP_ROWS_DP.dp.toPx() else 0f
+        val wfTop = specH + stripH
+        val wfH = size.height - wfTop - axisH
         val centre = w.centreHz
         val span = w.spanHz
         fun xOf(hz: Double) = ((hz - (centre - span / 2.0)) / span * size.width).toFloat()
@@ -196,8 +223,9 @@ private fun WideView(s: RigState, vm: RigViewModel, w: net.kanenet.catexplorer.a
             drawRect(accent.copy(alpha = 0.18f), Offset(x0, 0f), androidx.compose.ui.geometry.Size(x1 - x0, specH))
         }
         val path = Path()
+        w.paint(argb, palette)
+        bitmap.setPixels(argb, 0, w.width, 0, 0, w.width, w.height)
         synchronized(w.lock) {
-            bitmap.setPixels(w.pixels, 0, w.width, 0, 0, w.width, w.height)
             for (x in 0 until w.width) {
                 val px = (x + 0.5f) / w.width * size.width
                 val py = specH * (1f - (w.trace[x] / w.rangeDb).coerceIn(0f, 1f))
@@ -207,7 +235,7 @@ private fun WideView(s: RigState, vm: RigViewModel, w: net.kanenet.catexplorer.a
         drawPath(path, traceColor, style = Stroke(1.5f))
         drawImage(
             image, srcOffset = IntOffset.Zero, srcSize = IntSize(w.width, w.height),
-            dstOffset = IntOffset(0, specH.toInt()), dstSize = IntSize(size.width.toInt(), wfH.toInt()),
+            dstOffset = IntOffset(0, wfTop.toInt()), dstSize = IntSize(size.width.toInt(), wfH.toInt()),
             filterQuality = FilterQuality.Low,
         )
         // frequency grid: about eight labels across, on round numbers
@@ -223,6 +251,7 @@ private fun WideView(s: RigState, vm: RigViewModel, w: net.kanenet.catexplorer.a
                     drawText(m, topLeft = Offset(x - m.size.width / 2f, size.height - axisH + 1f))
                 hz += step
             }
+            if (edgesOn) drawBandPlan(centre - span / 2.0, centre + span / 2.0, ::xOf, specH, wfTop + wfH, measurer, labelStyle)
             // the dial
             val xd = xOf(centre.toDouble())
             drawLine(th[ThemeColor.HIST_TX], Offset(xd, 0f), Offset(xd, size.height - axisH), 1.5f)
@@ -237,10 +266,111 @@ private fun WideView(s: RigState, vm: RigViewModel, w: net.kanenet.catexplorer.a
         } + if (s.ptt) "  Paused while transmitting." else "",
         fontSize = 11.sp, lineHeight = 13.sp, maxLines = 1, color = th[ThemeColor.LABEL],
     )
+    if (edgesOn) BandLegend()
 }
 
 /** A round grid step (1, 2, 2.5 or 5 × a power of ten) close to [rough] Hz. */
 internal fun niceStep(rough: Double): Double {
     val p = Math.pow(10.0, Math.floor(Math.log10(rough)))
     return listOf(1.0, 2.0, 2.5, 5.0, 10.0).map { it * p }.first { it >= rough }
+}
+
+/** License-class strip under the spectrum: four rows of [STRIP_ROW_DP] with 1 dp gaps. */
+private const val STRIP_ROW_DP = 8
+private const val STRIP_ROWS_DP = 4 * STRIP_ROW_DP + 5
+
+private val useColors = mapOf(
+    BandPlan.Use.CW to Color(0xFFFFC107),
+    BandPlan.Use.DATA to Color(0xFF29B6F6),
+    BandPlan.Use.PHONE to Color(0xFF66BB6A),
+    BandPlan.Use.ALL to Color(0xFFBA68C8),
+)
+
+/**
+ * Band plan overlay for the RF range [rfLo]..[rfHi]: dims what's outside the ham bands, draws band edges (solid) and
+ * sub-band edges (dashed) from the top down to [bottom], labels them in MHz, and fills the strip under the spectrum
+ * (from [stripTop]) with where each license class may transmit, coloured by mode.
+ */
+private fun DrawScope.drawBandPlan(
+    rfLo: Double, rfHi: Double, xOfRf: (Double) -> Float, stripTop: Float, bottom: Float,
+    measurer: TextMeasurer, labelStyle: TextStyle,
+) {
+    fun x(rf: Double) = xOfRf(rf).coerceIn(0f, size.width)
+    val bands = BandPlan.bandsIn(rfLo, rfHi)
+    // dim outside the bands
+    val shade = Color.Black.copy(alpha = 0.45f)
+    var from = rfLo
+    for (b in bands.sortedBy { it.lo }) {
+        if (b.lo > from) drawSpan(x(from), x(b.lo.toDouble()), 0f, bottom, shade)
+        from = maxOf(from, b.hi.toDouble())
+    }
+    if (from < rfHi) drawSpan(x(from), x(rfHi), 0f, bottom, shade)
+
+    // license strip: one row per class, Extra at the top
+    val rowH = STRIP_ROW_DP.dp.toPx(); val gap = 1.dp.toPx()
+    val small = labelStyle.copy(fontSize = 8.sp, lineHeight = 8.sp, color = Color.White)
+    BandPlan.License.entries.forEachIndexed { i, lic ->
+        val y = stripTop + gap + i * (rowH + gap)
+        drawRect(Color(0xFF202020), Offset(0f, y), androidx.compose.ui.geometry.Size(size.width, rowH))
+        for (b in bands) for (seg in b.privileges(lic)) {
+            if (seg.hi < rfLo || seg.lo > rfHi) continue
+            drawSpan(x(seg.lo.toDouble()), x(seg.hi.toDouble()), y, y + rowH, useColors.getValue(seg.use))
+        }
+    }
+    // class letters at the left
+    BandPlan.License.entries.forEachIndexed { i, lic ->
+        val m = measurer.measure(lic.short, small)
+        val y = stripTop + gap + i * (rowH + gap) + rowH / 2 - m.size.height / 2f
+        val boxW = maxOf(m.size.width + 8f, rowH * 1.6f)
+        drawRect(Color.Black.copy(alpha = 0.8f), Offset(0f, stripTop + gap + i * (rowH + gap)), androidx.compose.ui.geometry.Size(boxW, rowH))
+        drawText(m, topLeft = Offset((boxW - m.size.width) / 2f, y))
+    }
+
+    // edge lines and their frequencies
+    var lastLabelEnd = -1f
+    for (edge in BandPlan.edgesIn(rfLo, rfHi)) {
+        val xe = xOfRf(edge.hz.toDouble())
+        if (xe < 0f || xe > size.width) continue
+        if (edge.bandEdge) drawLine(Color.White, Offset(xe, 0f), Offset(xe, bottom), 2.dp.toPx())
+        else drawLine(Color.White.copy(alpha = 0.6f), Offset(xe, 0f), Offset(xe, bottom), 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
+        val label = "%.4f".format(edge.hz / 1e6).trimEnd('0').let { if (it.substringAfter('.').length < 3) "%.3f".format(edge.hz / 1e6) else it }
+        val m = measurer.measure(label, labelStyle.copy(color = Color.White))
+        val lx = (xe - m.size.width / 2f).coerceIn(0f, size.width - m.size.width)
+        if (lx > lastLabelEnd + 4f) {
+            drawRect(Color.Black.copy(alpha = 0.65f), Offset(lx - 2f, 1f), androidx.compose.ui.geometry.Size(m.size.width + 4f, m.size.height.toFloat()))
+            drawText(m, topLeft = Offset(lx, 1f))
+            lastLabelEnd = lx + m.size.width
+        }
+    }
+}
+
+private fun DrawScope.drawSpan(xa: Float, xb: Float, top: Float, bottom: Float, color: Color) {
+    val x0 = minOf(xa, xb); val x1 = maxOf(xa, xb)
+    if (x1 - x0 < 0.5f) return
+    drawRect(color, Offset(x0, top), androidx.compose.ui.geometry.Size(x1 - x0, bottom - top))
+}
+
+/** Key for the license strip: which colour is which mode, and the class letters. */
+@Composable
+private fun BandLegend() {
+    val th = LocalThemeSettings.current
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("Strip: E A G T = Extra, Advanced, General, Technician —", fontSize = 11.sp, color = th[ThemeColor.LABEL])
+        useColors.forEach { (use, c) ->
+            Canvas(Modifier.size(10.dp)) { drawRect(c) }
+            Text(use.label, fontSize = 11.sp, color = th[ThemeColor.LABEL])
+        }
+        Text("· blank = no privileges, dimmed = out of band", fontSize = 11.sp, color = th[ThemeColor.LABEL])
+    }
+}
+
+/** A small left-to-right preview of a waterfall colour theme. */
+@Composable
+internal fun PaletteStrip(name: String, modifier: Modifier) {
+    val colors = WaterfallThemes.named(name).colors
+    Canvas(modifier) {
+        val n = 64
+        val w = size.width / n
+        for (i in 0 until n) drawRect(Color(colors[i * 255 / (n - 1)]), Offset(i * w, 0f), androidx.compose.ui.geometry.Size(w + 1f, size.height))
+    }
 }

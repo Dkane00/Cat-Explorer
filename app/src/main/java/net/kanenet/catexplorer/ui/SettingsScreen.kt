@@ -95,6 +95,48 @@ private fun SettingsList(vm: RigViewModel, theme: ThemeSettings, onClose: () -> 
                 fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp),
             )
             Spacer(Modifier.height(8.dp))
+            val wfTheme by vm.waterfallTheme.collectAsState()
+            var themeMenu by remember { mutableStateOf(false) }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Colours")
+                Box {
+                    OutlinedButton({ themeMenu = true }) {
+                        PaletteStrip(wfTheme, Modifier.width(120.dp).height(16.dp))
+                        Text(wfTheme, Modifier.padding(start = 10.dp))
+                    }
+                    DropdownMenu(themeMenu, { themeMenu = false }, Modifier.heightIn(max = 420.dp)) {
+                        net.kanenet.catexplorer.audio.WaterfallThemes.all.forEach { t ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        PaletteStrip(t.name, Modifier.width(120.dp).height(16.dp))
+                                        Text(t.name, Modifier.padding(start = 10.dp), color = if (t.name == wfTheme) theme[ThemeColor.ACCENT] else Color.Unspecified)
+                                    }
+                                },
+                                onClick = { vm.setWaterfallTheme(t.name); themeMenu = false },
+                            )
+                        }
+                    }
+                }
+            }
+            Text(
+                "Quiet on the left, loud on the right. All but Cat Explorer are the palettes that come with JS8Call.",
+                fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp),
+            )
+            Spacer(Modifier.height(4.dp))
+            val edges by vm.bandEdges.collectAsState()
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Band edges (US)")
+                    Text(
+                        "Marks band edges (solid lines, outside dimmed) and sub-band edges (dashed), with a strip showing where " +
+                            "Extra, Advanced, General and Technician licensees may transmit and which modes. FCC rules — a guide only.",
+                        fontSize = 12.sp, color = theme[ThemeColor.LABEL],
+                    )
+                }
+                Switch(edges, { vm.setBandEdges(it) })
+            }
+            Spacer(Modifier.height(8.dp))
             SectionTitle("Tune button")
             val carrier by vm.tuneCarrier.collectAsState()
             val tuneW by vm.tunePowerW.collectAsState()

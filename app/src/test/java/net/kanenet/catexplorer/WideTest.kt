@@ -38,8 +38,8 @@ class WideTest {
         w.add(frame(7_110_000, 10_000), frozen = false)
         val col2 = w.peakNear(500, 500)
         assertEquals(7_120_000.0, w.rfAt(col2.toDouble()), 200.0)
-        val row1 = w.pixels.copyOfRange(1000, 2000)        // the older row, shifted
-        val brightest = row1.indices.maxBy { row1[it].toLong() and 0xFFFFFF }
+        val row1 = w.levels.copyOfRange(1000, 2000)        // the older row, shifted
+        val brightest = row1.indices.maxBy { row1[it].toInt() and 0xFF }
         assertEquals(col2.toDouble(), brightest.toDouble(), 1.0)
     }
 

@@ -85,6 +85,12 @@ Setup, once:
 
 Below 24 MHz a V3 has no amplifier in front, so it needs a decent wire (5–10 m or more); a small whip shows little but interference there. On 10 m and 6 m it uses its normal tuner and a small antenna does much better.
 
+#### Band edges and colours
+
+Both waterfalls mark the US (FCC) amateur band plan: band edges as solid white lines with everything outside the band dimmed, and sub-band edges as dashed lines, each labelled with its frequency. A strip under the spectrum has one row per license class (**E**xtra, **A**dvanced, **G**eneral, **T**echnician), coloured where that class may transmit: yellow = CW only, blue = CW & data, green = phone & CW, purple = all modes; blank means no privileges. It covers 160 m to 6 m plus 2 m and 70 cm (60 m as its five channels). It is a guide: check the current FCC rules before relying on it. Turn it off under **Settings → Waterfall → Band edges (US)**. The audio waterfall shows edges only in SSB, CW and DATA modes, where audio maps simply to RF.
+
+**Settings → Waterfall → Colours** picks the waterfall's colour theme: the app's own **Cat Explorer** colours, or any of the 28 palettes that come with JS8Call (the same set WSJT-X has). Changing it recolours the whole picture at once, including what has already scrolled by.
+
 ## Safety
 
 This app can **transmit**. The Tune button, the CW keyer memories and voice-message playback key the radio. Check that your antenna is connected and use low power when trying new things. The Tune carrier is limited to 5 to 10 W and stops by itself after one minute.

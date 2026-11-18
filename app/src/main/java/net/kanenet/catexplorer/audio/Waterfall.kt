@@ -10,12 +10,17 @@ import kotlin.math.sin
 interface WaterfallPicture {
     val width: Int
     val height: Int
-    /** ARGB rows, newest at the top. Read and write only under [lock]. */
-    val pixels: IntArray
+    /** Colour levels 0..255 (unsigned), rows newest at the top. Read and write only under [lock]. */
+    val levels: ByteArray
     /** Latest spectrum in dB above the noise floor, one value per pixel column. */
     val trace: FloatArray
     val lock: Any
     var rangeDb: Float
+
+    /** Colours the picture with [palette] (256 colours) into [out]. */
+    fun paint(out: IntArray, palette: IntArray) = synchronized(lock) {
+        for (i in levels.indices) out[i] = palette[levels[i].toInt() and 0xFF]
+    }
 }
 
 /** How the radio's audio maps to RF: upper sideband, lower sideband (audio runs backwards), or no simple mapping (AM, FM, RTTY). */
@@ -126,7 +131,7 @@ class WaterfallEngine(rate: Int, val maxHz: Int = 4000, override val height: Int
     private val sorted = FloatArray(width)
 
     override val lock = Any()
-    override val pixels = IntArray(width * height) { BLACK }
+    override val levels = ByteArray(width * height)
     override val trace = FloatArray(width)
     @Volatile var floorDb = Float.NaN
         private set
@@ -164,10 +169,10 @@ class WaterfallEngine(rate: Int, val maxHz: Int = 4000, override val height: Int
         val lo = floorDb - 3f
         val r = rangeDb
         synchronized(lock) {
-            System.arraycopy(pixels, 0, pixels, width, width * (height - 1))
+            System.arraycopy(levels, 0, levels, width, width * (height - 1))
             for (x in 0 until width) {
                 val level = ((db[x] - lo) / r).coerceIn(0f, 1f)
-                pixels[x] = PALETTE[(level * 255).toInt()]
+                levels[x] = (level * 255).toInt().toByte()
                 trace[x] = trace[x] * 0.5f + (db[x] - floorDb) * 0.5f
             }
         }
@@ -177,22 +182,22 @@ class WaterfallEngine(rate: Int, val maxHz: Int = 4000, override val height: Int
     fun shift(px: Int) {
         if (px == 0) return
         synchronized(lock) {
-            if (kotlin.math.abs(px) >= width) { pixels.fill(BLACK); trace.fill(0f); return }
+            if (kotlin.math.abs(px) >= width) { levels.fill(0); trace.fill(0f); return }
             for (y in 0 until height) {
                 val o = y * width
                 if (px > 0) {
-                    System.arraycopy(pixels, o, pixels, o + px, width - px)
-                    pixels.fill(BLACK, o, o + px)
+                    System.arraycopy(levels, o, levels, o + px, width - px)
+                    levels.fill(0, o, o + px)
                 } else {
-                    System.arraycopy(pixels, o - px, pixels, o, width + px)
-                    pixels.fill(BLACK, o + width + px, o + width)
+                    System.arraycopy(levels, o - px, levels, o, width + px)
+                    levels.fill(0, o + width + px, o + width)
                 }
             }
             trace.fill(0f)
         }
     }
 
-    fun clear() = synchronized(lock) { pixels.fill(BLACK); trace.fill(0f) }
+    fun clear() = synchronized(lock) { levels.fill(0); trace.fill(0f) }
 
     /** Audio frequency of the strongest bin within ±[span] Hz of [hz]. */
     fun peakNear(hz: Double, span: Double): Double {
@@ -205,22 +210,6 @@ class WaterfallEngine(rate: Int, val maxHz: Int = 4000, override val height: Int
         return (best + 0.5) * binHz
     }
 
-    companion object {
-        const val BLACK = 0xFF000000.toInt()
-        /** Black → blue → cyan → yellow → red → white. */
-        val PALETTE = IntArray(256) { i ->
-            val stops = arrayOf(
-                0f to intArrayOf(0, 0, 0), 0.2f to intArrayOf(0, 0, 140), 0.4f to intArrayOf(0, 160, 220),
-                0.6f to intArrayOf(240, 230, 0), 0.8f to intArrayOf(240, 40, 0), 1f to intArrayOf(255, 255, 255),
-            )
-            val t = i / 255f
-            val k = stops.indexOfLast { it.first <= t }.coerceAtMost(stops.size - 2)
-            val (t0, c0) = stops[k]; val (t1, c1) = stops[k + 1]
-            val u = ((t - t0) / (t1 - t0)).coerceIn(0f, 1f)
-            val rgb = IntArray(3) { (c0[it] + (c1[it] - c0[it]) * u).toInt() }
-            (0xFF shl 24) or (rgb[0] shl 16) or (rgb[1] shl 8) or rgb[2]
-        }
-    }
 }
 
 /** One spectrum line from the PC's RTL-SDR: [db] runs low to high frequency, bin i centred on centreHz + (i - size/2) * binHz. */
@@ -232,7 +221,7 @@ class SpecFrame(val centreHz: Long, val binHz: Float, val db: FloatArray, val ov
  */
 class WideEngine(override val width: Int = 1000, override val height: Int = 220) : WaterfallPicture {
     override val lock = Any()
-    override val pixels = IntArray(width * height) { WaterfallEngine.BLACK }
+    override val levels = ByteArray(width * height)
     override val trace = FloatArray(width)
     @Volatile override var rangeDb = 45f
     @Volatile var floorDb = Float.NaN
@@ -285,11 +274,11 @@ class WideEngine(override val width: Int = 1000, override val height: Int = 220)
         val lo = floorDb - 3f
         val r = rangeDb
         synchronized(lock) {
-            System.arraycopy(pixels, 0, pixels, width, width * (height - 1))
+            System.arraycopy(levels, 0, levels, width, width * (height - 1))
             for (x in 0 until width) {
                 val v = row[x]
-                if (v.isNaN()) { pixels[x] = WaterfallEngine.BLACK; trace[x] = 0f; continue }
-                pixels[x] = WaterfallEngine.PALETTE[(((v - lo) / r).coerceIn(0f, 1f) * 255).toInt()]
+                if (v.isNaN()) { levels[x] = 0; trace[x] = 0f; continue }
+                levels[x] = (((v - lo) / r).coerceIn(0f, 1f) * 255).toInt().toByte()
                 trace[x] = trace[x] * 0.5f + (v - floorDb) * 0.5f
             }
         }
@@ -299,22 +288,22 @@ class WideEngine(override val width: Int = 1000, override val height: Int = 220)
     fun shift(px: Int) {
         if (px == 0) return
         synchronized(lock) {
-            if (kotlin.math.abs(px) >= width) { pixels.fill(WaterfallEngine.BLACK); trace.fill(0f); return }
+            if (kotlin.math.abs(px) >= width) { levels.fill(0); trace.fill(0f); return }
             for (y in 0 until height) {
                 val o = y * width
                 if (px > 0) {
-                    System.arraycopy(pixels, o, pixels, o + px, width - px)
-                    pixels.fill(WaterfallEngine.BLACK, o, o + px)
+                    System.arraycopy(levels, o, levels, o + px, width - px)
+                    levels.fill(0, o, o + px)
                 } else {
-                    System.arraycopy(pixels, o - px, pixels, o, width + px)
-                    pixels.fill(WaterfallEngine.BLACK, o + width + px, o + width)
+                    System.arraycopy(levels, o - px, levels, o, width + px)
+                    levels.fill(0, o + width + px, o + width)
                 }
             }
             trace.fill(0f)
         }
     }
 
-    fun clear() = synchronized(lock) { pixels.fill(WaterfallEngine.BLACK); trace.fill(0f) }
+    fun clear() = synchronized(lock) { levels.fill(0); trace.fill(0f) }
 
     /** RF frequency under pixel column [x] (may be fractional). */
     fun rfAt(x: Double): Double = centreHz - spanHz / 2.0 + (x + 0.5) * hzPerPx
