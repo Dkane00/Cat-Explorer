@@ -50,6 +50,8 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
     val span by vm.wideSpan.collectAsState()
     val themeName by vm.waterfallTheme.collectAsState()
     val edgesOn by vm.bandEdges.collectAsState()
+    val barSetting by vm.licenseBars.collectAsState()
+    val bars = if (edgesOn) BandPlan.barClasses(barSetting) else emptyList()
     val palette = WaterfallThemes.named(themeName).colors
     val e = vm.engine
     val w = vm.wide
@@ -89,7 +91,7 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
             }
         }
         if (wideMode && w != null) {
-            WideView(s, vm, w, frame, palette, edgesOn)
+            WideView(s, vm, w, frame, palette, edgesOn, bars)
             return@Column
         }
         if (e == null) {
@@ -111,7 +113,7 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
         val accent = th[ThemeColor.ACCENT]
 
         Canvas(
-            Modifier.fillMaxWidth().height(if (edgesOn && sense != Sense.NONE) (230 + STRIP_ROWS_DP).dp else 230.dp).padding(top = 4.dp).pointerInput(e, sense) {
+            Modifier.fillMaxWidth().height((230 + if (sense != Sense.NONE) stripDp(bars.size) else 0).dp).padding(top = 4.dp).pointerInput(e, sense) {
                 if (sense != Sense.NONE) detectTapGestures { p -> vm.waterfallTap(p.x.toDouble() / size.width * e.maxHz) }
             },
         ) {
@@ -121,9 +123,9 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
             // RF of an audio tone and back, for the band edges (none in AM/FM, where there's no simple mapping)
             val tone = TuneMath.dialTone(s.mode, pitch)
             val showEdges = edgesOn && sense != Sense.NONE && s.activeHz > 0
-            val stripH = if (showEdges) STRIP_ROWS_DP.dp.toPx() else 0f
-            val wfTop = specH + stripH
-            val wfH = size.height - wfTop - axisH
+            val stripH = if (showEdges) stripDp(bars.size).dp.toPx() else 0f
+            val wfTop = specH
+            val wfH = size.height - wfTop - stripH - axisH
             fun xOf(hz: Double) = (hz / e.maxHz * size.width).toFloat()
 
             // spectrum trace
@@ -159,7 +161,7 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
                 val rfA = s.activeHz + sense.sign * (0.0 - tone); val rfB = s.activeHz + sense.sign * (e.maxHz - tone.toDouble())
                 drawBandPlan(
                     minOf(rfA, rfB), maxOf(rfA, rfB), { rf -> xOf(tone + sense.sign * (rf - s.activeHz)) },
-                    specH, wfTop + wfH, measurer, labelStyle,
+                    wfTop + wfH, bars, measurer, labelStyle,
                 )
             }
             // where a tap sends a signal
@@ -177,7 +179,7 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
             } + if (s.ptt) "  Paused while transmitting." else "",
             fontSize = 11.sp, lineHeight = 13.sp, maxLines = 1, color = th[ThemeColor.LABEL],
         )
-        if (edgesOn && sense != Sense.NONE) BandLegend()
+        if (bars.isNotEmpty() && sense != Sense.NONE) BandLegend(bars)
     }
 }
 
@@ -185,6 +187,7 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
 @Composable
 private fun WideView(
     s: RigState, vm: RigViewModel, w: net.kanenet.catexplorer.audio.WideEngine, frame: Int, palette: IntArray, edgesOn: Boolean,
+    bars: List<BandPlan.License>,
 ) {
     val th = LocalThemeSettings.current
     val bitmap = remember(w) { Bitmap.createBitmap(w.width, w.height, Bitmap.Config.ARGB_8888) }
@@ -197,16 +200,16 @@ private fun WideView(
     val bwHz = Regex("\\d+").find(s.bandwidth)?.value?.toIntOrNull()
 
     Canvas(
-        Modifier.fillMaxWidth().height(if (edgesOn) (230 + STRIP_ROWS_DP).dp else 230.dp).padding(top = 4.dp).pointerInput(w) {
+        Modifier.fillMaxWidth().height((230 + stripDp(bars.size)).dp).padding(top = 4.dp).pointerInput(w) {
             detectTapGestures { p -> vm.wideTap(p.x.toDouble() / size.width * w.width) }
         },
     ) {
         frame   // redraw on every new row
         val specH = size.height * 0.25f
         val axisH = 14.dp.toPx()
-        val stripH = if (edgesOn) STRIP_ROWS_DP.dp.toPx() else 0f
-        val wfTop = specH + stripH
-        val wfH = size.height - wfTop - axisH
+        val stripH = stripDp(bars.size).dp.toPx()
+        val wfTop = specH
+        val wfH = size.height - wfTop - stripH - axisH
         val centre = w.centreHz
         val span = w.spanHz
         fun xOf(hz: Double) = ((hz - (centre - span / 2.0)) / span * size.width).toFloat()
@@ -251,7 +254,7 @@ private fun WideView(
                     drawText(m, topLeft = Offset(x - m.size.width / 2f, size.height - axisH + 1f))
                 hz += step
             }
-            if (edgesOn) drawBandPlan(centre - span / 2.0, centre + span / 2.0, ::xOf, specH, wfTop + wfH, measurer, labelStyle)
+            if (edgesOn) drawBandPlan(centre - span / 2.0, centre + span / 2.0, ::xOf, wfTop + wfH, bars, measurer, labelStyle)
             // the dial
             val xd = xOf(centre.toDouble())
             drawLine(th[ThemeColor.HIST_TX], Offset(xd, 0f), Offset(xd, size.height - axisH), 1.5f)
@@ -266,7 +269,7 @@ private fun WideView(
         } + if (s.ptt) "  Paused while transmitting." else "",
         fontSize = 11.sp, lineHeight = 13.sp, maxLines = 1, color = th[ThemeColor.LABEL],
     )
-    if (edgesOn) BandLegend()
+    if (bars.isNotEmpty()) BandLegend(bars)
 }
 
 /** A round grid step (1, 2, 2.5 or 5 × a power of ten) close to [rough] Hz. */
@@ -275,9 +278,9 @@ internal fun niceStep(rough: Double): Double {
     return listOf(1.0, 2.0, 2.5, 5.0, 10.0).map { it * p }.first { it >= rough }
 }
 
-/** License-class strip under the spectrum: four rows of [STRIP_ROW_DP] with 1 dp gaps. */
+/** License bars under the waterfall: one row of [STRIP_ROW_DP] per class, with 1 dp gaps. */
 private const val STRIP_ROW_DP = 8
-private const val STRIP_ROWS_DP = 4 * STRIP_ROW_DP + 5
+private fun stripDp(rows: Int) = if (rows == 0) 0 else rows * STRIP_ROW_DP + rows + 1
 
 private val useColors = mapOf(
     BandPlan.Use.CW to Color(0xFFFFC107),
@@ -288,28 +291,30 @@ private val useColors = mapOf(
 
 /**
  * Band plan overlay for the RF range [rfLo]..[rfHi]: dims what's outside the ham bands, draws band edges (solid) and
- * sub-band edges (dashed) from the top down to [bottom], labels them in MHz, and fills the strip under the spectrum
- * (from [stripTop]) with where each license class may transmit, coloured by mode.
+ * sub-band edges (dashed) down through the bars, labels them in MHz, and draws one bar per class in [classes] just
+ * below the waterfall (from [stripTop]) showing where that class may transmit, coloured by mode.
  */
 private fun DrawScope.drawBandPlan(
-    rfLo: Double, rfHi: Double, xOfRf: (Double) -> Float, stripTop: Float, bottom: Float,
+    rfLo: Double, rfHi: Double, xOfRf: (Double) -> Float, stripTop: Float, classes: List<BandPlan.License>,
     measurer: TextMeasurer, labelStyle: TextStyle,
 ) {
+    val bottom = stripTop + stripDp(classes.size).dp.toPx()
     fun x(rf: Double) = xOfRf(rf).coerceIn(0f, size.width)
     val bands = BandPlan.bandsIn(rfLo, rfHi)
     // dim outside the bands
     val shade = Color.Black.copy(alpha = 0.45f)
     var from = rfLo
     for (b in bands.sortedBy { it.lo }) {
-        if (b.lo > from) drawSpan(x(from), x(b.lo.toDouble()), 0f, bottom, shade)
+        if (b.lo > from) drawSpan(x(from), x(b.lo.toDouble()), 0f, stripTop, shade)
         from = maxOf(from, b.hi.toDouble())
     }
-    if (from < rfHi) drawSpan(x(from), x(rfHi), 0f, bottom, shade)
+    if (from < rfHi) drawSpan(x(from), x(rfHi), 0f, stripTop, shade)
+    if (classes.isNotEmpty()) drawRect(Color(0xFF101010), Offset(0f, stripTop), androidx.compose.ui.geometry.Size(size.width, bottom - stripTop))
 
-    // license strip: one row per class, Extra at the top
+    // license bars: one row per chosen class, Extra at the top
     val rowH = STRIP_ROW_DP.dp.toPx(); val gap = 1.dp.toPx()
     val small = labelStyle.copy(fontSize = 8.sp, lineHeight = 8.sp, color = Color.White)
-    BandPlan.License.entries.forEachIndexed { i, lic ->
+    classes.forEachIndexed { i, lic ->
         val y = stripTop + gap + i * (rowH + gap)
         drawRect(Color(0xFF202020), Offset(0f, y), androidx.compose.ui.geometry.Size(size.width, rowH))
         for (b in bands) for (seg in b.privileges(lic)) {
@@ -318,7 +323,7 @@ private fun DrawScope.drawBandPlan(
         }
     }
     // class letters at the left
-    BandPlan.License.entries.forEachIndexed { i, lic ->
+    classes.forEachIndexed { i, lic ->
         val m = measurer.measure(lic.short, small)
         val y = stripTop + gap + i * (rowH + gap) + rowH / 2 - m.size.height / 2f
         val boxW = maxOf(m.size.width + 8f, rowH * 1.6f)
@@ -350,12 +355,12 @@ private fun DrawScope.drawSpan(xa: Float, xb: Float, top: Float, bottom: Float, 
     drawRect(color, Offset(x0, top), androidx.compose.ui.geometry.Size(x1 - x0, bottom - top))
 }
 
-/** Key for the license strip: which colour is which mode, and the class letters. */
+/** Key for the license bars: the classes shown, and which colour is which mode. */
 @Composable
-private fun BandLegend() {
+private fun BandLegend(classes: List<BandPlan.License>) {
     val th = LocalThemeSettings.current
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("Strip: E A G T = Extra, Advanced, General, Technician —", fontSize = 11.sp, color = th[ThemeColor.LABEL])
+        Text("Bars: " + classes.joinToString(", ") { "${it.short} = ${it.label}" } + " —", fontSize = 11.sp, color = th[ThemeColor.LABEL])
         useColors.forEach { (use, c) ->
             Canvas(Modifier.size(10.dp)) { drawRect(c) }
             Text(use.label, fontSize = 11.sp, color = th[ThemeColor.LABEL])

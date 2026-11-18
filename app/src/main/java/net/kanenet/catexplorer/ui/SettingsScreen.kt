@@ -129,12 +129,25 @@ private fun SettingsList(vm: RigViewModel, theme: ThemeSettings, onClose: () -> 
                 Column(Modifier.weight(1f)) {
                     Text("Band edges (US)")
                     Text(
-                        "Marks band edges (solid lines, outside dimmed) and sub-band edges (dashed), with a strip showing where " +
-                            "Extra, Advanced, General and Technician licensees may transmit and which modes. FCC rules — a guide only.",
+                        "Marks band edges (solid lines, outside dimmed) and sub-band edges (dashed). FCC rules — a guide only.",
                         fontSize = 12.sp, color = theme[ThemeColor.LABEL],
                     )
                 }
                 Switch(edges, { vm.setBandEdges(it) })
+            }
+            if (edges) {
+                val bars by vm.licenseBars.collectAsState()
+                Text("License bars", Modifier.padding(top = 4.dp))
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    net.kanenet.catexplorer.audio.BandPlan.barChoices.forEach { (v, label) ->
+                        FilterChip(bars == v, { vm.setLicenseBars(v) }, { Text(label) }, colors = selectedBlue())
+                    }
+                }
+                Text(
+                    "Bars under the waterfall showing where that license class may transmit, coloured by mode.",
+                    fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp),
+                )
             }
             Spacer(Modifier.height(8.dp))
             SectionTitle("Tune button")

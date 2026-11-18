@@ -457,6 +457,11 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
     val bandEdges = _bandEdges.asStateFlow()
     fun setBandEdges(on: Boolean) { _bandEdges.value = on; prefs.edit().putBoolean("band_edges", on).apply() }
 
+    private val _licenseBars = MutableStateFlow(prefs.getString("license_bars", "all") ?: "all")
+    /** Which license class's privilege bars to show under the waterfall: "off", "all", or "T"/"G"/"A"/"E". */
+    val licenseBars = _licenseBars.asStateFlow()
+    fun setLicenseBars(v: String) { _licenseBars.value = v; prefs.edit().putString("license_bars", v).apply() }
+
     /** Spans the SDR view can show, in Hz. */
     val wideSpans = listOf(10_000, 20_000, 50_000, 100_000, 200_000)
     private val _wideSpan = MutableStateFlow(prefs.getInt("wide_span", 200_000).let { if (it in wideSpans) it else 200_000 })

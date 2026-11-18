@@ -80,6 +80,16 @@ object BandPlan {
         band("70 cm", seg(420000.0, 450000.0, Use.ALL, E, A, G, T)),
     )
 
+    /** Choices for the license bars setting: "off", "all", or one class's short letter. */
+    val barChoices = listOf("off" to "Off") + License.entries.reversed().map { it.short to it.label } + listOf("all" to "All four")
+
+    /** The classes to draw bars for, Extra first, for a [barChoices] value. */
+    fun barClasses(setting: String): List<License> = when (setting) {
+        "off" -> emptyList()
+        "all" -> License.entries
+        else -> License.entries.filter { it.short == setting }.ifEmpty { License.entries }
+    }
+
     /** The band containing [hz], or null when it's outside the ham bands. */
     fun bandAt(hz: Long): Band? = bands.firstOrNull { hz >= it.lo && hz <= it.hi }
 

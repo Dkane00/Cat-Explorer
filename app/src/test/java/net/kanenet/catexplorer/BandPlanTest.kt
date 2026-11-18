@@ -35,6 +35,13 @@ class BandPlanTest {
         assertTrue(!band.first { it.hz == 14_025_000L }.bandEdge)
     }
 
+    @Test fun licenseBarChoices() {
+        assertEquals(emptyList<License>(), BandPlan.barClasses("off"))
+        assertEquals(listOf(License.GENERAL), BandPlan.barClasses("G"))
+        assertEquals(4, BandPlan.barClasses("all").size)
+        assertEquals(listOf("off", "T", "G", "A", "E", "all"), BandPlan.barChoices.map { it.first })
+    }
+
     @Test fun themesHave256OpaqueColours() {
         assertEquals(29, WaterfallThemes.all.size)
         for (t in WaterfallThemes.all) {
