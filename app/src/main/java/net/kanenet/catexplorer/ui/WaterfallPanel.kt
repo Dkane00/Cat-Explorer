@@ -289,6 +289,9 @@ private val useColors = mapOf(
     BandPlan.Use.ALL to Color(0xFFBA68C8),
 )
 
+/** On a class's bar: part of the band where only a higher license may transmit. */
+private val higherClassColor = Color(0xFFE53935)
+
 /**
  * Band plan overlay for the RF range [rfLo]..[rfHi]: dims what's outside the ham bands, draws band edges (solid) and
  * sub-band edges (dashed) down through the bars, labels them in MHz, and draws one bar per class in [classes] just
@@ -317,6 +320,11 @@ private fun DrawScope.drawBandPlan(
     classes.forEachIndexed { i, lic ->
         val y = stripTop + gap + i * (rowH + gap)
         drawRect(Color(0xFF202020), Offset(0f, y), androidx.compose.ui.geometry.Size(size.width, rowH))
+        // red where only a higher class may transmit, then this class's own privileges on top
+        for (b in bands) for (seg in b.segments) {
+            if (seg.hi < rfLo || seg.lo > rfHi || seg.classes.none { it.ordinal < lic.ordinal }) continue
+            drawSpan(x(seg.lo.toDouble()), x(seg.hi.toDouble()), y, y + rowH, higherClassColor)
+        }
         for (b in bands) for (seg in b.privileges(lic)) {
             if (seg.hi < rfLo || seg.lo > rfHi) continue
             drawSpan(x(seg.lo.toDouble()), x(seg.hi.toDouble()), y, y + rowH, useColors.getValue(seg.use))
@@ -365,7 +373,11 @@ private fun BandLegend(classes: List<BandPlan.License>) {
             Canvas(Modifier.size(10.dp)) { drawRect(c) }
             Text(use.label, fontSize = 11.sp, color = th[ThemeColor.LABEL])
         }
-        Text("· blank = no privileges, dimmed = out of band", fontSize = 11.sp, color = th[ThemeColor.LABEL])
+        if (classes.any { it != BandPlan.License.EXTRA }) {
+            Canvas(Modifier.size(10.dp)) { drawRect(higherClassColor) }
+            Text("Higher class only — don't transmit", fontSize = 11.sp, color = th[ThemeColor.LABEL])
+        }
+        Text("· dimmed = out of band", fontSize = 11.sp, color = th[ThemeColor.LABEL])
     }
 }
 
