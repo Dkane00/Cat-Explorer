@@ -8,3 +8,4 @@ local.properties
 .kotlin/
 ab2.png
 release/
+__pycache__/

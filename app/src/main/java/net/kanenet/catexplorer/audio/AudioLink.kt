@@ -12,7 +12,7 @@ import java.net.Socket
 const val AUDIO_DEFAULT_PORT = 7366
 
 /**
- * The radio's receive audio, streamed from `pc-helper/cat-audio-server.py` on the FLRig PC.
+ * The radio's receive audio, streamed from `pc-panadapter/cat-panadapter-server.py` on the FLRig PC.
  * The stream starts with one text line ("CATAUDIO 1 rate=12000 ch=1 fmt=s16le") and is then raw 16-bit mono samples.
  */
 class AudioLink(private val host: String, private val port: Int) : Closeable {
@@ -21,17 +21,17 @@ class AudioLink(private val host: String, private val port: Int) : Closeable {
         private set
     private var track: AudioTrack? = null
 
-    /** Connects and reads the header. Throws with a message fit for the screen if there is no helper there. */
+    /** Connects and reads the header. Throws with a message fit for the screen if there is no panadapter there. */
     fun open() {
         try {
             socket.connect(InetSocketAddress(host, port), 3000)
         } catch (e: IOException) {
-            throw IOException("No audio helper at $host:$port — is cat-audio-server.py running on the PC?")
+            throw IOException("No Cat Explorer Panadapter at $host:$port — is it running on the FLRig PC?")
         }
         socket.soTimeout = 5000
         socket.tcpNoDelay = true
         val header = readLine(socket.getInputStream())
-        if (!header.startsWith("CATAUDIO 1")) throw IOException("$host:$port isn't the Cat Explorer audio helper")
+        if (!header.startsWith("CATAUDIO 1")) throw IOException("$host:$port isn't the Cat Explorer Panadapter")
         Regex("rate=(\\d+)").find(header)?.groupValues?.get(1)?.toIntOrNull()?.let { rate = it }
     }
 
@@ -39,7 +39,7 @@ class AudioLink(private val host: String, private val port: Int) : Closeable {
         val sb = StringBuilder()
         while (sb.length < 200) {
             val b = input.read()
-            if (b < 0) throw IOException("The audio helper closed the connection")
+            if (b < 0) throw IOException("The Panadapter closed the connection")
             if (b == '\n'.code) break
             sb.append(b.toChar())
         }
@@ -57,7 +57,7 @@ class AudioLink(private val host: String, private val port: Int) : Closeable {
         var odd = -1   // a leftover low byte when a read ends half-way through a sample
         while (keepGoing()) {
             val n = input.read(bytes)
-            if (n < 0) throw IOException("The audio helper stopped sending")
+            if (n < 0) throw IOException("The Panadapter stopped sending")
             var count = 0
             var i = 0
             if (odd >= 0 && n > 0) { shorts[count++] = ((bytes[0].toInt() shl 8) or odd).toShort(); i = 1; odd = -1 }

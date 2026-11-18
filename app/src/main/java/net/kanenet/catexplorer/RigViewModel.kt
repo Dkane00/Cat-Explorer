@@ -423,7 +423,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         cat("MC%03d;".format(ch))
     }
 
-    // ---- Waterfall (receive audio from the PC's audio helper) ----
+    // ---- Waterfall (receive audio from the PC's Panadapter) ----
     private val _audioPort = MutableStateFlow(prefs.getInt("audio_port", net.kanenet.catexplorer.audio.AUDIO_DEFAULT_PORT))
     val audioPort = _audioPort.asStateFlow()
     fun setAudioPort(p: Int) {
@@ -446,7 +446,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         engine?.rangeDb = _waterfallRange.value.toFloat()
     }
 
-    /** "" while running normally; otherwise what's wrong (no helper, connecting…). */
+    /** "" while running normally; otherwise what's wrong (no panadapter, connecting…). */
     private val _waterfallStatus = MutableStateFlow("")
     val waterfallStatus = _waterfallStatus.asStateFlow()
     /** Goes up by one for every new waterfall row, so the screen knows to redraw. */
@@ -468,7 +468,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         waterfallJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
                 val host = _host.value.trim()
-                _waterfallStatus.value = "Connecting to the audio helper…"
+                _waterfallStatus.value = "Connecting to the Panadapter on the PC…"
                 val link = net.kanenet.catexplorer.audio.AudioLink(host, _audioPort.value).also { audioLink = it }
                 try {
                     link.open()
@@ -497,7 +497,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
                 } finally {
                     link.close()
                 }
-                delay(3000)   // try again: the helper may simply not be started yet
+                delay(3000)   // try again: the panadapter may simply not be started yet
             }
         }
     }

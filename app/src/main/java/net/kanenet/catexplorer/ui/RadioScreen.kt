@@ -149,7 +149,7 @@ private fun Card(modifier: Modifier = Modifier, content: @Composable ColumnScope
 private fun HistoryCard(s: RigState, vm: RigViewModel) {
     val history by vm.history.collectAsState()
     val waterfallOn by vm.waterfallOn.collectAsState()
-    // the waterfall needs the radio's audio, which only reaches the tablet from the FLRig PC's audio helper, so USB shows history only
+    // the waterfall needs the radio's audio, which only reaches the tablet from the FLRig PC's Panadapter, so USB shows history only
     val showWaterfall = waterfallOn && !s.directUsb
     val th = LocalThemeSettings.current
     @Composable fun Tab(label: String, selected: Boolean, onClick: () -> Unit) = Text(

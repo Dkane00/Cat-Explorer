@@ -40,14 +40,28 @@ Run FLRig on the computer the radio is plugged into. In FLRig turn on the XML-RP
 
 The radio screen has a **Waterfall** card that shows the radio's receive audio, about 0 to 4 kHz: everything inside your current filter. Tap a signal to tune to it. In CW the signal goes onto your CW pitch, in DATA it goes to 1500 Hz, and in SSB the point you tap becomes the carrier (tap the low edge of a USB voice signal). **Listen** also plays the audio on the tablet.
 
-The FT-891 has no wide band-scope output, so this is a passband waterfall, not a wide panadapter. The audio comes from a small helper on the FLRig PC that records the sound card wired to the radio's DATA jack:
+The FT-891 has no wide band-scope output, so this is a passband waterfall, not a wide panadapter. The audio comes from a small program on the FLRig PC, **Cat Explorer Panadapter**, that records the sound card wired to the radio's DATA jack.
+
+**The easy way: install the Panadapter window.** From the Cat Explorer folder run
 
 ```bash
-python3 pc-helper/cat-audio-server.py --list     # show the sound inputs
-python3 pc-helper/cat-audio-server.py            # picks the USB sound card by itself; or add --device NAME
+pc-panadapter/install.sh
 ```
 
-It needs only Python 3 and `parec` (PulseAudio/PipeWire) or `arecord`. It listens on port 7366 (change it with `--port`, and in the app's Settings). It has no password, so keep it on your home network or VPN like FLRig's port. If the card says "Audio too loud", turn the sound card's input level down on the PC. It is off in USB mode because the tablet can't get the radio's audio over the USB cable.
+That installs it just for you (no password). Run it with `sudo` instead to install it for every user on the PC, and with `--uninstall` to remove it. It adds **Cat Explorer Panadapter**, with the app's icon, to the **Ham Radio** folder of the start menu (creating that folder if your system doesn't have one), plus a `cat-panadapter` command. It needs Python 3, GTK 3 for Python (`python3-gi`) and `pulseaudio-utils`, which Mint, Ubuntu and Pop!_OS include; if one is missing, the installer tells you the `apt` command to get it.
+
+Open it from the menu, pick the sound card from **Sound input** and press **Start**. The window shows whether the panadapter is running, the PC's addresses, which tablets are connected, and a live audio level that warns you if the audio is clipping. You can close the window: the panadapter keeps running in the background until you open the window again and press **Stop**. (Without installing, `python3 pc-panadapter/cat-panadapter.py` opens the same window.)
+
+The desktop icon is made from the app's own launcher icon by `pc-panadapter/icon/make-icons.py`; run it again if the app icon changes.
+
+**From a terminal** (no window):
+
+```bash
+python3 pc-panadapter/cat-panadapter-server.py --list     # show the sound inputs
+python3 pc-panadapter/cat-panadapter-server.py            # picks the USB sound card by itself; or add --device NAME
+```
+
+The panadapter needs only Python 3 and `parec` (PulseAudio/PipeWire) or `arecord`. It listens on port 7366 (change it in the window or with `--port`, and in the app's Settings). It has no password, so keep it on your home network or VPN like FLRig's port. If the app or the window says the audio is too loud, turn the sound card's input level down on the PC. The waterfall is off in USB mode because the tablet can't get the radio's audio over the USB cable.
 
 ## Safety
 
@@ -72,8 +86,8 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - `rig/FlrigClient.kt` and `rig/XmlRpc.kt`: the FLRig connection (a small XML-RPC client).
 - `rig/UsbCatClient.kt` and `rig/UsbLink.kt`: the direct USB connection (CAT over the radio's CP2105 serial bridge, using the [usb-serial-for-android](https://github.com/mik3y/usb-serial-for-android) library).
 - `rig/YaesuDsp.kt`: FT-891 CAT command strings and reply parsers.
-- `audio/`: the waterfall: `AudioLink.kt` (the stream from the PC helper, and Listen playback) and `Waterfall.kt` (FFT, waterfall rows, tap-to-tune maths).
-- `pc-helper/cat-audio-server.py`: the PC side of the waterfall.
+- `audio/`: the waterfall: `AudioLink.kt` (the stream from the PC Panadapter, and Listen playback) and `Waterfall.kt` (FFT, waterfall rows, tap-to-tune maths).
+- `pc-panadapter/cat-panadapter-server.py`: the PC side of the waterfall; `pc-panadapter/cat-panadapter.py` is its window.
 - `RigViewModel.kt`: the polling loop and command dispatch.
 - `ui/`: connect screen, radio screen, meters, DSP and memory panels, settings.
 

@@ -29,7 +29,7 @@ import net.kanenet.catexplorer.audio.TuneMath
 import net.kanenet.catexplorer.rig.RigState
 
 /**
- * Audio waterfall of the receive passband (about 0–4 kHz), fed by the PC audio helper. Tap a signal to tune to it.
+ * Audio waterfall of the receive passband (about 0–4 kHz), fed by the PC Panadapter. Tap a signal to tune to it.
  * It can only show what's inside the radio's filter — the FT-891 has no wide band-scope output.
  */
 @Composable
@@ -72,7 +72,7 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
         if (e == null) {
             Box(Modifier.fillMaxWidth().height(230.dp), contentAlignment = Alignment.Center) {
                 Text(
-                    if (status.isEmpty()) "Waiting for audio…" else "Needs cat-audio-server.py running on the FLRig PC (see pc-helper in the Cat Explorer repo).",
+                    if (status.isEmpty()) "Waiting for audio…" else "Start Cat Explorer Panadapter on the FLRig PC (Ham Radio menu) and the waterfall appears here.",
                     fontSize = 12.sp, color = th[ThemeColor.LABEL],
                 )
             }
