@@ -19,6 +19,9 @@ class AudioLink(private val host: String, private val port: Int) : Closeable {
     private val socket = Socket()
     var rate = 12000
         private set
+    /** true when the PC sends SDR spectrum lines (CATSPEC) instead of audio (CATAUDIO). */
+    var spectrum = false
+        private set
     private var track: AudioTrack? = null
 
     /** Connects and reads the header. Throws with a message fit for the screen if there is no panadapter there. */
@@ -31,7 +34,8 @@ class AudioLink(private val host: String, private val port: Int) : Closeable {
         socket.soTimeout = 5000
         socket.tcpNoDelay = true
         val header = readLine(socket.getInputStream())
-        if (!header.startsWith("CATAUDIO 1")) throw IOException("$host:$port isn't the Cat Explorer Panadapter")
+        spectrum = header.startsWith("CATSPEC ")
+        if (!spectrum && !header.startsWith("CATAUDIO 1")) throw IOException("$host:$port isn't the Cat Explorer Panadapter")
         Regex("rate=(\\d+)").find(header)?.groupValues?.get(1)?.toIntOrNull()?.let { rate = it }
     }
 
@@ -66,6 +70,60 @@ class AudioLink(private val host: String, private val port: Int) : Closeable {
             if (count == 0) continue
             onSamples(shorts, count)
             play(listen(), shorts, count)
+        }
+    }
+
+    /** Reads SDR spectrum lines until the connection drops or [keepGoing] turns false. */
+    fun pumpSpectrum(keepGoing: () -> Boolean, onFrame: (SpecFrame) -> Unit) {
+        val input = java.io.DataInputStream(BufferedInputStream(socket.getInputStream(), 16384))
+        val inflater = java.util.zip.Inflater()
+        var bytes = ByteArray(0)
+        var packed = ByteArray(0)
+        try {
+            while (keepGoing()) {
+                when (input.readUnsignedByte()) {
+                    // compressed (CATSPEC 2): zlib-packed differences between neighbouring bins, in steps of stepDb
+                    'Z'.code -> {
+                        val centre = input.readLong()
+                        val binHz = input.readFloat()
+                        val base = input.readFloat()
+                        val step = input.readFloat()
+                        val n = input.readUnsignedShort()
+                        val flags = input.readUnsignedByte()
+                        val len = input.readUnsignedShort()
+                        if (packed.size < len) packed = ByteArray(len)
+                        input.readFully(packed, 0, len)
+                        if (bytes.size != n) bytes = ByteArray(n)
+                        inflater.reset()
+                        inflater.setInput(packed, 0, len)
+                        var got = 0
+                        while (got < n && !inflater.finished()) {
+                            val k = inflater.inflate(bytes, got, n - got)
+                            if (k == 0 && (inflater.needsInput() || inflater.needsDictionary())) break
+                            got += k
+                        }
+                        if (got != n) throw IOException("The Panadapter sent a damaged spectrum line")
+                        var level = 0
+                        val db = FloatArray(n) { level += bytes[it]; base + level * step }
+                        onFrame(SpecFrame(centre, binHz, db, flags and 1 != 0))
+                    }
+                    // uncompressed (CATSPEC 1, from an older Panadapter): one byte per bin in half-dB steps
+                    'F'.code -> {
+                        val centre = input.readLong()
+                        val binHz = input.readFloat()
+                        val base = input.readFloat()
+                        val n = input.readUnsignedShort()
+                        val flags = input.readUnsignedByte()
+                        if (bytes.size != n) bytes = ByteArray(n)
+                        input.readFully(bytes)
+                        val db = FloatArray(n) { base + (bytes[it].toInt() and 0xFF) / 2f }
+                        onFrame(SpecFrame(centre, binHz, db, flags and 1 != 0))
+                    }
+                    else -> throw IOException("The Panadapter sent something unexpected")
+                }
+            }
+        } finally {
+            inflater.end()
         }
     }
 

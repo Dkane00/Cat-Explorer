@@ -444,7 +444,24 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
     fun setWaterfallRange(db: Int) {
         _waterfallRange.value = db.coerceIn(20, 80); prefs.edit().putInt("waterfall_range", _waterfallRange.value).apply()
         engine?.rangeDb = _waterfallRange.value.toFloat()
+        wide?.rangeDb = _waterfallRange.value.toFloat()
     }
+
+    /** Spans the SDR view can show, in Hz. */
+    val wideSpans = listOf(10_000, 20_000, 50_000, 100_000, 200_000)
+    private val _wideSpan = MutableStateFlow(prefs.getInt("wide_span", 200_000).let { if (it in wideSpans) it else 200_000 })
+    val wideSpan = _wideSpan.asStateFlow()
+    fun stepWideSpan(dir: Int) {
+        val i = (wideSpans.indexOf(_wideSpan.value) + dir).coerceIn(0, wideSpans.lastIndex)
+        _wideSpan.value = wideSpans[i]; prefs.edit().putInt("wide_span", wideSpans[i]).apply()
+        wide?.spanHz = wideSpans[i]
+    }
+
+    /** true while the PC is sending an SDR (wide) view rather than audio. */
+    private val _wideMode = MutableStateFlow(false)
+    val wideMode = _wideMode.asStateFlow()
+    @Volatile var wide: net.kanenet.catexplorer.audio.WideEngine? = null
+        private set
 
     /** "" while running normally; otherwise what's wrong (no panadapter, connecting…). */
     private val _waterfallStatus = MutableStateFlow("")
@@ -472,6 +489,17 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
                 val link = net.kanenet.catexplorer.audio.AudioLink(host, _audioPort.value).also { audioLink = it }
                 try {
                     link.open()
+                    _wideMode.value = link.spectrum
+                    if (link.spectrum) {
+                        val w = wide ?: net.kanenet.catexplorer.audio.WideEngine().also { wide = it }
+                        w.rangeDb = _waterfallRange.value.toFloat()
+                        w.spanHz = _wideSpan.value
+                        _waterfallStatus.value = ""
+                        link.pumpSpectrum({ isActive }) { f ->
+                            if (w.add(f, frozen = _state.value.ptt)) _waterfallFrame.value++
+                        }
+                        throw java.io.IOException("The Panadapter stopped sending")
+                    }
                     val e = engine?.takeIf { it.binHz == link.rate / 2048.0 }
                         ?: net.kanenet.catexplorer.audio.WaterfallEngine(link.rate).also { engine = it }
                     e.rangeDb = _waterfallRange.value.toFloat()
@@ -519,6 +547,21 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         val hz = if (st.mode.startsWith("CW")) e.peakNear(audioHz, 60.0) else audioHz
         val dial = net.kanenet.catexplorer.audio.TuneMath.retune(hz, st.activeHz, st.mode, pitch) ?: return
         send { setFrequency(dial.toDouble()) }
+    }
+
+    /**
+     * A tap on the SDR view at pixel column [x]: tunes the radio to that signal (snapping to the strongest signal within
+     * ±300 Hz in CW and DATA, and putting it at 1500 Hz in DATA).
+     */
+    fun wideTap(x: Double) {
+        val w = wide ?: return
+        val st = _state.value
+        // the picture isn't around the radio's dial (the Panadapter's test frequency, or not caught up yet): don't tune
+        if (kotlin.math.abs(w.centreHz - st.activeHz) > w.spanHz / 2) return
+        // CW and DATA signals are narrow: find the exact peak near the tap; SSB is tuned exactly where tapped
+        val tapped = w.rfAt(x)
+        val rf = if (st.mode.startsWith("CW") || st.mode.startsWith("DATA")) w.refinePeak(tapped, 300.0) else tapped
+        send { setFrequency(net.kanenet.catexplorer.audio.TuneMath.wideRetune(rf, st.mode).toDouble()) }
     }
 
     override fun onCleared() { disconnect() }

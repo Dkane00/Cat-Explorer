@@ -76,6 +76,13 @@ if (( ${#missing[@]} )); then
     exit 1
 fi
 
+# optional: the RTL-SDR wide panadapter needs numpy and RTL-SDR Blog's rtl_tcp
+sdr_notes=()
+python3 -c 'import numpy' 2>/dev/null || sdr_notes+=("numpy is missing:  sudo apt install python3-numpy")
+if [[ ! -x $HOME/.local/opt/rtl-sdr-blog/bin/rtl_tcp && ! -x /opt/rtl-sdr-blog/bin/rtl_tcp && ! -x /usr/local/bin/rtl_tcp ]]; then
+    sdr_notes+=("RTL-SDR Blog's driver isn't built yet (Ubuntu's rtl-sdr package can't do HF) — see \"RTL-SDR\" in the README")
+fi
+
 # ---- the earlier "Cat Explorer Audio Helper" name: stop it and remove it, so the two don't fight over the port ----
 OLD=cat-explorer-audio-helper
 old_pidfile="${XDG_RUNTIME_DIR:-/tmp}/cat-audio-helper/helper.pid"
@@ -167,4 +174,9 @@ echo "  program     $APP_DIR"
 echo "  menu entry  Ham Radio → Cat Explorer Panadapter"
 echo "  command     cat-panadapter"
 [[ :$PATH: == *":$BIN:"* ]] || echo "  ($BIN isn't on your PATH yet; it will be after you log out and back in)"
-echo "Open it from the menu, choose the radio's sound card and press Start."
+echo "Open it from the menu, choose the radio's sound card (or the RTL-SDR) and press Start."
+if (( ${#sdr_notes[@]} )); then
+    echo
+    echo "Only needed for an RTL-SDR:"
+    printf '  %s\n' "${sdr_notes[@]}"
+fi

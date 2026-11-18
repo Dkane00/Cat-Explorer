@@ -63,6 +63,28 @@ python3 pc-panadapter/cat-panadapter-server.py            # picks the USB sound 
 
 The panadapter needs only Python 3 and `parec` (PulseAudio/PipeWire) or `arecord`. It listens on port 7366 (change it in the window or with `--port`, and in the app's Settings). It has no password, so keep it on your home network or VPN like FLRig's port. If the app or the window says the audio is too loud, turn the sound card's input level down on the PC. The waterfall is off in USB mode because the tablet can't get the radio's audio over the USB cable.
 
+#### RTL-SDR: a real wide panadapter
+
+With an RTL-SDR on the FLRig PC, the Waterfall tab becomes a true panadapter: about 200 kHz of the band around your dial, with real frequencies, a red line at the dial, your receive filter shaded, **Span** from 200 kHz down to 10 kHz, and tap-to-tune (CW and DATA taps snap to the nearest signal; DATA puts the signal at 1500 Hz in your audio). The PC reads the radio's frequency from FLRig, keeps the SDR tuned near it (retuning by itself when you change band), does the FFT and sends the picture to the tablet. It pauses while you transmit.
+
+**Protect the SDR.** It needs its own receive antenna or a T/R switch keyed by the radio (for example from the FT-891's TX GND line on the rear LINEAR jack). Never connect it to the radio's antenna: one transmission would destroy it. With a separate antenna near your HF antenna, add an RF limiter and keep the power down until you know what it picks up.
+
+Setup, once:
+
+1. Install the tools and numpy: `sudo apt install rtl-sdr python3-numpy`, then unplug and replug the dongle.
+2. Build RTL-SDR Blog's driver into your home folder. Ubuntu's `rtl-sdr` 2.0.1 returns no data in the direct-sampling mode a V3 uses for HF; RTL-SDR Blog's version works and switches to it by itself below 24 MHz:
+
+   ```bash
+   git clone https://github.com/rtlsdrblog/rtl-sdr-blog ~/.local/src/rtl-sdr-blog
+   cd ~/.local/src/rtl-sdr-blog && mkdir -p build && cd build
+   cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/.local/opt/rtl-sdr-blog -DINSTALL_UDEV_RULES=OFF -DDETACH_KERNEL_DRIVER=ON
+   make -j4 && make install
+   ```
+
+3. In the Panadapter window choose **RTL-SDR — wide panadapter** as the source and press Start. **SDR gain** only matters above 24 MHz (10 m, 6 m); lower it if the window says the SDR is overloaded. **Correction** (ppm) fixes an SDR that shows signals off their real frequency. **Test on a fixed frequency** points it at, say, FM broadcast (98.0) to check it works without FLRig; taps do nothing then.
+
+Below 24 MHz a V3 has no amplifier in front, so it needs a decent wire (5–10 m or more); a small whip shows little but interference there. On 10 m and 6 m it uses its normal tuner and a small antenna does much better.
+
 ## Safety
 
 This app can **transmit**. The Tune button, the CW keyer memories and voice-message playback key the radio. Check that your antenna is connected and use low power when trying new things. The Tune carrier is limited to 5 to 10 W and stops by itself after one minute.
@@ -86,7 +108,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - `rig/FlrigClient.kt` and `rig/XmlRpc.kt`: the FLRig connection (a small XML-RPC client).
 - `rig/UsbCatClient.kt` and `rig/UsbLink.kt`: the direct USB connection (CAT over the radio's CP2105 serial bridge, using the [usb-serial-for-android](https://github.com/mik3y/usb-serial-for-android) library).
 - `rig/YaesuDsp.kt`: FT-891 CAT command strings and reply parsers.
-- `audio/`: the waterfall: `AudioLink.kt` (the stream from the PC Panadapter, and Listen playback) and `Waterfall.kt` (FFT, waterfall rows, tap-to-tune maths).
+- `audio/`: the waterfall: `AudioLink.kt` (the stream from the PC Panadapter: audio with Listen playback, or SDR spectrum lines) and `Waterfall.kt` (FFT, waterfall rows, the SDR view's `WideEngine`, tap-to-tune maths).
 - `pc-panadapter/cat-panadapter-server.py`: the PC side of the waterfall; `pc-panadapter/cat-panadapter.py` is its window.
 - `RigViewModel.kt`: the polling loop and command dispatch.
 - `ui/`: connect screen, radio screen, meters, DSP and memory panels, settings.
