@@ -2,9 +2,11 @@
 
 A touchscreen controller for the **Yaesu FT-891** HF transceiver, for Android tablets and phones. It shows the radio's frequency, mode, filter and meters live and lets you control the radio from the screen, either **through FLRig on a PC** or **directly over USB** with an OTG cable and no PC at all. Inspired by the creater of the CatTouch7USB, Chris Day Zl1CVD.  Use the hardware you already have lying around and put it to good use!
 
-![Cat Explorer main screen, connected to an FT-891 over USB](docs/screenshot-main.png)
+![Cat Explorer main screen, connected through FLRig, with the RTL-SDR waterfall](docs/screenshot-main.png)
 
-**New to the app? Read the [User Guide (PDF)](docs/Cat-Explorer-User-Guide.pdf).** It covers connecting to the radio, every screen and button, and all of the settings, with screenshots.
+**New to the app? Read the [User Guide (PDF)](docs/Cat-Explorer-User-Guide.pdf).** It covers connecting to the radio, every screen and button, the waterfall and all of the settings, with screenshots.
+
+**Download:** the latest APK is on the [Releases](https://github.com/Dkane00/Cat-Explorer/releases) page.
 
 > **Radio support: FT-891 only, for now.**
 > Most of the CAT (Computer Aided Transceiver) commands in this app are written for the FT-891 and its CAT manual: the DSP and filter settings, meter scales, memory channels, filter-width table and the like. Other Yaesu radios use different commands and ranges, and other brands use different protocols altogether. The app has only been tested on an FT-891. Support for other radios may come but I am limited to the radios that I have to test.
@@ -19,6 +21,7 @@ A touchscreen controller for the **Yaesu FT-891** HF transceiver, for Android ta
 - **Memory channels**: a table of the radio's programmed channels. Tap a row to go to it, or add and edit channels (frequency, mode, tone, shift, name). The channel list is backed up to the app's files folder before the first write of a session.
 - **Band button**: jumps to a phone calling frequency on each band and sets its usual mode (30 m goes to its digital frequency in DATA-U). The Bands tab lists the digital-mode calling frequencies.
 - **Tune button**: runs the radio's own antenna tuner, or, for an external auto-tuner, sends a short low-power AM carrier and then puts your mode, width and power back.
+- **Waterfall and panadapter** (FLRig connection): a waterfall of the radio's receive audio, or with an RTL-SDR on the PC a true wide panadapter of up to 200 kHz, fed by the small **Cat Explorer Panadapter** program on the FLRig PC. Tap a signal to tune to it. US band and sub-band edges are marked, with license bars showing where Technician, General, Advanced or Extra may transmit (red where only a higher class may), and 29 colour themes including JS8Call's palettes. See [Waterfall](#waterfall-flrig-connection-only).
 - **Raw CAT console** for sending any CAT command and seeing the reply.
 - **Themes**: dark or light, with every colour changeable.
 
@@ -107,6 +110,8 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 `CATEXPLORER_LIVE=127.0.0.1 ./gradlew :app:testDebugUnitTest` adds a read-only test against a running FLRig.
+
+The user guide PDF is built from `docs/guide/make-guide.py` and the screenshots in `docs/guide/shots/` (needs Python with `reportlab` and `pillow`): `python3 docs/guide/make-guide.py`.
 
 ## Code layout
 
