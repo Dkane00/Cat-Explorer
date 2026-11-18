@@ -34,8 +34,9 @@ SIZES="16 22 24 32 48 64 128 256"
 
 refresh_menus() {
     command -v update-desktop-database >/dev/null && update-desktop-database -q "$SHARE/applications" 2>/dev/null || true
-    # the icon cache only exists for a theme folder with an index.theme (the system one); a personal folder needs none
-    if [[ -f "$ICONS/index.theme" ]] && command -v gtk-update-icon-cache >/dev/null; then
+    # A personal icon folder normally has no cache, but another program may have left one there. A stale cache hides
+    # the new icon from the panel, so rebuild any cache that exists, and always rebuild the system one.
+    if [[ -f "$ICONS/index.theme" || -f "$ICONS/icon-theme.cache" ]] && command -v gtk-update-icon-cache >/dev/null; then
         gtk-update-icon-cache -q -f -t "$ICONS" || true
     fi
     touch "$SHARE/applications" 2>/dev/null || true   # nudges the start menu to reload
