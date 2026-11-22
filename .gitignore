@@ -9,3 +9,4 @@ local.properties
 ab2.png
 release/
 __pycache__/
+.cxx/
