@@ -497,6 +497,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
     /** Called by the screen when the waterfall card is showing; does nothing if already running. */
     fun startWaterfall() {
         if (!_waterfallOn.value || waterfallJob?.isActive == true) return
+        if (_state.value.directUsb) { startTabletSdr(); return }
         waterfallJob = viewModelScope.launch(Dispatchers.IO) {
             while (isActive) {
                 val host = _host.value.trim()
@@ -541,6 +542,65 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
                     link.close()
                 }
                 delay(3000)   // try again: the panadapter may simply not be started yet
+            }
+        }
+    }
+
+    /** An RTL-SDR is plugged into the tablet (checked when the radio connects over USB and when the card is shown). */
+    private val _tabletSdr = MutableStateFlow(false)
+    val tabletSdr = _tabletSdr.asStateFlow()
+    fun checkTabletSdr() { _tabletSdr.value = net.kanenet.catexplorer.audio.RtlSdr.find(getApplication()) != null }
+
+    /**
+     * Direct USB connection: runs the RTL-SDR plugged into the tablet itself, following the radio's dial, and feeds the same
+     * wide view the PC Panadapter does. Retries every 3 s if the dongle is missing or stops.
+     */
+    private fun startTabletSdr() {
+        val previous = waterfallJob
+        waterfallJob = viewModelScope.launch(Dispatchers.IO) {
+            previous?.join()   // a stopped run may still be closing the dongle
+            val T = net.kanenet.catexplorer.audio.TabletSdr
+            while (isActive) {
+                checkTabletSdr()
+                if (!_tabletSdr.value) {
+                    _waterfallStatus.value = "Plug an RTL-SDR into the tablet (through a USB hub, beside the radio) for the waterfall."
+                    delay(3000); continue
+                }
+                var dial = _state.value.activeHz
+                while (isActive && dial <= 0) { delay(200); dial = _state.value.activeHz }
+                _waterfallStatus.value = "Starting the RTL-SDR…"
+                _wideMode.value = true   // show the SDR controls (Span) straight away, not the audio ones
+                var sdr: net.kanenet.catexplorer.audio.RtlSdr? = null
+                try {
+                    var centre = T.centreFor(dial)
+                    sdr = net.kanenet.catexplorer.audio.RtlSdr.open(getApplication(), T.RATE, centre, -1, 0, T.FFT)
+                    _wideMode.value = true
+                    val w = wide ?: net.kanenet.catexplorer.audio.WideEngine().also { wide = it }
+                    w.rangeDb = _waterfallRange.value.toFloat()
+                    w.spanHz = _wideSpan.value
+                    _waterfallStatus.value = ""
+                    val power = FloatArray(T.FFT)
+                    val stats = IntArray(3)
+                    var skip = 2   // the first reads after (re)tuning hold samples from before it settled
+                    while (isActive) {
+                        val st = _state.value
+                        if (st.activeHz > 0) dial = st.activeHz
+                        if (!T.inRange(dial, centre)) {
+                            centre = T.centreFor(dial); sdr.tune(centre); skip = 2
+                        }
+                        sdr.readSpectrum(power, T.FFTS_PER_FRAME, stats)
+                        if (skip > 0) { skip--; continue }
+                        val f = T.frame(power, centre, dial, overload = stats[1] > 0 && stats[0] * 1000 > stats[1]) ?: continue
+                        if (w.add(f, frozen = st.ptt)) _waterfallFrame.value++
+                    }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    _waterfallStatus.value = e.message ?: "RTL-SDR stopped"
+                } finally {
+                    sdr?.close()
+                }
+                delay(3000)
             }
         }
     }

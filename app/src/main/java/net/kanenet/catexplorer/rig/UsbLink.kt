@@ -50,7 +50,8 @@ object UsbLink {
         throw IOException("The radio didn't answer at $baud baud (tried$tried). Check CAT RATE (menu 05-06) on the radio.")
     }
 
-    private fun askPermission(ctx: Context, um: UsbManager, device: android.hardware.usb.UsbDevice): Boolean {
+    /** Shows Android's USB permission dialog for [device] and waits for the answer (up to a minute). */
+    fun askPermission(ctx: Context, um: UsbManager, device: android.hardware.usb.UsbDevice): Boolean {
         val latch = CountDownLatch(1)
         val granted = AtomicBoolean(false)
         val receiver = object : BroadcastReceiver() {

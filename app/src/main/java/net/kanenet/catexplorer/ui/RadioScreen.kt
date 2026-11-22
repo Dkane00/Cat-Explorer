@@ -149,8 +149,11 @@ private fun Card(modifier: Modifier = Modifier, content: @Composable ColumnScope
 private fun HistoryCard(s: RigState, vm: RigViewModel) {
     val history by vm.history.collectAsState()
     val waterfallOn by vm.waterfallOn.collectAsState()
-    // the waterfall needs the radio's audio, which only reaches the tablet from the FLRig PC's Panadapter, so USB shows history only
-    val showWaterfall = waterfallOn && !s.directUsb
+    // over FLRig the waterfall comes from the PC's Panadapter; over USB only from an RTL-SDR plugged into the tablet itself
+    val tabletSdr by vm.tabletSdr.collectAsState()
+    if (s.directUsb) LaunchedEffect(Unit) { while (true) { vm.checkTabletSdr(); kotlinx.coroutines.delay(3000) } }
+    val canWaterfall = !s.directUsb || tabletSdr
+    val showWaterfall = waterfallOn && canWaterfall
     val th = LocalThemeSettings.current
     @Composable fun Tab(label: String, selected: Boolean, onClick: () -> Unit) = Text(
         label, fontSize = 12.sp,
@@ -161,7 +164,7 @@ private fun HistoryCard(s: RigState, vm: RigViewModel) {
     )
     val tabs: @Composable RowScope.() -> Unit = {
         Tab("Signal history", !showWaterfall) { vm.setWaterfallOn(false) }
-        if (!s.directUsb) Tab("Waterfall", showWaterfall) { vm.setWaterfallOn(true) }
+        if (canWaterfall) Tab("Waterfall", showWaterfall) { vm.setWaterfallOn(true) }
     }
     // signal history keeps its original height; on the waterfall tab the card grows to fit the full-height waterfall
     Card(Modifier.fillMaxWidth().then(if (showWaterfall) Modifier else Modifier.height(121.dp))) {

@@ -21,7 +21,7 @@ A touchscreen controller for the **Yaesu FT-891** HF transceiver, for Android ta
 - **Memory channels**: a table of the radio's programmed channels. Tap a row to go to it, or add and edit channels (frequency, mode, tone, shift, name). The channel list is backed up to the app's files folder before the first write of a session.
 - **Band button**: jumps to a phone calling frequency on each band and sets its usual mode (30 m goes to its digital frequency in DATA-U). The Bands tab lists the digital-mode calling frequencies.
 - **Tune button**: runs the radio's own antenna tuner, or, for an external auto-tuner, sends a short low-power AM carrier and then puts your mode, width and power back.
-- **Waterfall and panadapter** (FLRig connection): a waterfall of the radio's receive audio, or with an RTL-SDR on the PC a true wide panadapter of up to 200 kHz, fed by the small **Cat Explorer Panadapter** program on the FLRig PC. Tap a signal to tune to it. US band and sub-band edges are marked, with license bars showing where Technician, General, Advanced or Extra may transmit (red where only a higher class may), and 29 colour themes including JS8Call's palettes. See [Waterfall](#waterfall-flrig-connection-only).
+- **Waterfall and panadapter**: with FLRig, a waterfall of the radio's receive audio, or with an RTL-SDR on the PC a true wide panadapter of up to 200 kHz, fed by the small **Cat Explorer Panadapter** program on the FLRig PC. Over USB, plug an RTL-SDR into the tablet beside the radio (through a USB hub) and the app runs it itself, no PC needed. Tap a signal to tune to it. US band and sub-band edges are marked, with license bars showing where Technician, General, Advanced or Extra may transmit (red where only a higher class may), and 29 colour themes including JS8Call's palettes. See [Waterfall](#waterfall).
 - **Raw CAT console** for sending any CAT command and seeing the reply.
 - **Themes**: dark or light, with every colour changeable.
 
@@ -39,7 +39,7 @@ Plug the radio's USB port into the tablet with a USB-C OTG cable. In the app, en
 
 Run FLRig on the computer the radio is plugged into. In FLRig turn on the XML-RPC server (Config → Setup → UI → Server), make sure it listens on the network and not only on localhost, and allow its port (default 12345) through the PC's firewall. In the app, enter the PC's address and port and tap **Connect**. The tablet and the PC must be on the same network or VPN.
 
-### Waterfall (FLRig connection only)
+### Waterfall
 
 The radio screen has a **Waterfall** card that shows the radio's receive audio, about 0 to 4 kHz: everything inside your current filter. Tap a signal to tune to it. In CW the signal goes onto your CW pitch, in DATA it goes to 1500 Hz, and in SSB the point you tap becomes the carrier (tap the low edge of a USB voice signal). **Listen** also plays the audio on the tablet.
 
@@ -64,7 +64,7 @@ python3 pc-panadapter/cat-panadapter-server.py --list     # show the sound input
 python3 pc-panadapter/cat-panadapter-server.py            # picks the USB sound card by itself; or add --device NAME
 ```
 
-The panadapter needs only Python 3 and `parec` (PulseAudio/PipeWire) or `arecord`. It listens on port 7366 (change it in the window or with `--port`, and in the app's Settings). It has no password, so keep it on your home network or VPN like FLRig's port. If the app or the window says the audio is too loud, turn the sound card's input level down on the PC. The waterfall is off in USB mode because the tablet can't get the radio's audio over the USB cable.
+The panadapter needs only Python 3 and `parec` (PulseAudio/PipeWire) or `arecord`. It listens on port 7366 (change it in the window or with `--port`, and in the app's Settings). It has no password, so keep it on your home network or VPN like FLRig's port. If the app or the window says the audio is too loud, turn the sound card's input level down on the PC.
 
 #### RTL-SDR: a real wide panadapter
 
@@ -88,6 +88,14 @@ Setup, once:
 
 Below 24 MHz a V3 has no amplifier in front, so it needs a decent wire (5–10 m or more); a small whip shows little but interference there. On 10 m and 6 m it uses its normal tuner and a small antenna does much better.
 
+#### RTL-SDR on the tablet (USB connection, no PC)
+
+Connected to the radio over USB, the tablet can run an RTL-SDR itself: plug the radio and the RTL-SDR into a powered USB-C hub on the tablet, connect with **Connect over USB**, and the **Waterfall** tab appears. The first time, Android asks whether Cat Explorer may use the RTL-SDR; tap **OK**. The view is the same wide panadapter as the PC's (up to 200 kHz around the dial, Span, tap-to-tune, band edges), and the app keeps the SDR tuned near the radio's dial, using direct sampling below 24 MHz like the PC. The audio waterfall isn't available this way, because the FT-891's USB port carries no audio.
+
+The same antenna rules apply: the SDR needs its own receive antenna or a T/R switch, never the radio's antenna socket. Gain is automatic (it only matters above 24 MHz). A USB hub with an Ethernet adapter or a charger can add steady carriers to the picture; if you see evenly spaced lines that move when the SDR retunes, try another hub or unplug its extras. Tested with an RTL-SDR Blog V3 and an FT-891 on a Galaxy Tab S6 Lite (Android 16).
+
+The driver is RTL-SDR Blog's `librtlsdr` with `libusb`, built into the app from `app/src/main/cpp` (see [License](#license)); building the app needs the Android NDK and CMake (`sdkmanager "ndk;27.3.13750724" "cmake;3.22.1"`).
+
 #### Band edges and colours
 
 Both waterfalls mark the US (FCC) amateur band plan: band edges as solid white lines with everything outside the band dimmed, and sub-band edges as dashed lines, each labelled with its frequency. License bars along the bottom of the waterfall show where a class may transmit (**Settings → Waterfall → License bars**: Off, Technician, General, Advanced, Extra, or all four, one row each): yellow = CW only, blue = CW & data, green = phone & CW, purple = all modes; red means only a higher license class may transmit there, so don't. It covers 160 m to 6 m plus 2 m and 70 cm (60 m as its five channels). It is a guide: check the current FCC rules before relying on it. Turn the edges off under **Settings → Waterfall → Band edges (US)**. The audio waterfall shows edges only in SSB, CW and DATA modes, where audio maps simply to RF.
@@ -100,7 +108,7 @@ This app can **transmit**. The Tune button, the CW keyer memories and voice-mess
 
 ## Build
 
-You need JDK 17 and the Android SDK. `env.sh` shows the paths used here (adjust them for your machine).
+You need JDK 17, the Android SDK, and the Android NDK and CMake for the RTL-SDR driver (`sdkmanager "ndk;27.3.13750724" "cmake;3.22.1"`). `env.sh` shows the paths used here (adjust them for your machine).
 
 ```bash
 source ./env.sh                 # JDK 17 + Gradle + Android SDK paths
@@ -133,4 +141,11 @@ The user guide PDF is built from `docs/guide/make-guide.py` and the screenshots 
 
 ## License
 
-Cat Explorer is open source under the [MIT License](LICENSE). Copyright (c) 2026 David Kane (W6MZT).
+Cat Explorer's own code is open source under the [MIT License](LICENSE). Copyright (c) 2026 David Kane (W6MZT).
+
+The app also includes two libraries by other people, in `app/src/main/cpp`, each with its own license file there:
+
+- **librtlsdr** from [RTL-SDR Blog](https://github.com/rtlsdrblog/rtl-sdr-blog) (GPL version 2 or later), with one small addition for Android marked in the source: `rtlsdr_open_fd()`.
+- **libusb** 1.0.27 from [libusb.info](https://github.com/libusb/libusb) (LGPL version 2.1 or later), unchanged.
+
+Because the GPL driver is built into the APK, the APK as a whole is distributed under the terms of the GNU GPL version 2 or later, with complete source in this repository. Cat Explorer's own files stay MIT-licensed and can be reused under MIT on their own.

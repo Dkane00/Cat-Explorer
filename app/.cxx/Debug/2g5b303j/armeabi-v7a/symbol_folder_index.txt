@@ -1,0 +1,1 @@
+/home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/armeabi-v7a

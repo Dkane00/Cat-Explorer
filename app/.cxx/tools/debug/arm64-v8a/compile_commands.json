@@ -1,0 +1,87 @@
+[
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/android -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -fvisibility=hidden -pthread -Wno-everything -o CMakeFiles/usb1.dir/libusb/core.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/core.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/core.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/android -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -fvisibility=hidden -pthread -Wno-everything -o CMakeFiles/usb1.dir/libusb/descriptor.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/descriptor.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/descriptor.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/android -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -fvisibility=hidden -pthread -Wno-everything -o CMakeFiles/usb1.dir/libusb/hotplug.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/hotplug.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/hotplug.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/android -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -fvisibility=hidden -pthread -Wno-everything -o CMakeFiles/usb1.dir/libusb/io.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/io.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/io.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/android -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -fvisibility=hidden -pthread -Wno-everything -o CMakeFiles/usb1.dir/libusb/sync.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/sync.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/sync.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/android -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -fvisibility=hidden -pthread -Wno-everything -o CMakeFiles/usb1.dir/libusb/strerror.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/strerror.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/strerror.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/android -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -fvisibility=hidden -pthread -Wno-everything -o CMakeFiles/usb1.dir/libusb/os/linux_usbfs.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os/linux_usbfs.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os/linux_usbfs.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/android -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -fvisibility=hidden -pthread -Wno-everything -o CMakeFiles/usb1.dir/libusb/os/events_posix.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os/events_posix.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os/events_posix.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/android -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -fvisibility=hidden -pthread -Wno-everything -o CMakeFiles/usb1.dir/libusb/os/threads_posix.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os/threads_posix.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os/threads_posix.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/android -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -fvisibility=hidden -pthread -Wno-everything -o CMakeFiles/usb1.dir/libusb/os/linux_netlink.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os/linux_netlink.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb/os/linux_netlink.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Drtlsdr_STATIC -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/rtlsdr.dir/rtlsdr/librtlsdr.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/librtlsdr.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/librtlsdr.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Drtlsdr_STATIC -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/rtlsdr.dir/rtlsdr/tuner_e4k.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/tuner_e4k.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/tuner_e4k.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Drtlsdr_STATIC -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/rtlsdr.dir/rtlsdr/tuner_fc0012.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/tuner_fc0012.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/tuner_fc0012.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Drtlsdr_STATIC -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/rtlsdr.dir/rtlsdr/tuner_fc0013.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/tuner_fc0013.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/tuner_fc0013.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Drtlsdr_STATIC -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/rtlsdr.dir/rtlsdr/tuner_fc2580.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/tuner_fc2580.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/tuner_fc2580.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Drtlsdr_STATIC -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/rtlsdr.dir/rtlsdr/tuner_r82xx.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/tuner_r82xx.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/tuner_r82xx.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Dcatsdr_EXPORTS -Drtlsdr_STATIC -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -o CMakeFiles/catsdr.dir/catsdr.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/catsdr.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/catsdr.c"
+}
+]

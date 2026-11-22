@@ -1,0 +1,24 @@
+# ninja log v5
+293	370	1795354854427087141	CMakeFiles/rtlsdr.dir/rtlsdr/tuner_fc0012.c.o	88328bf71cec4ebe
+598	612	1795354854666088634	libusb1.a	a1394351368fa81c
+2	111	1795354854171085543	CMakeFiles/usb1.dir/libusb/sync.c.o	42ef84c033634dda
+359	460	1795354854520087722	CMakeFiles/rtlsdr.dir/rtlsdr/tuner_fc2580.c.o	ff97053f22fe23e5
+367	499	1795354854557087953	CMakeFiles/rtlsdr.dir/rtlsdr/tuner_r82xx.c.o	25ef2f96796c5f93
+621	650	1795354854707088890	/home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so	e38ed8f40d2a3e8
+0	287	1795354854341086604	CMakeFiles/usb1.dir/libusb/descriptor.c.o	408ecf902fd378b7
+1	100	1795354854161085480	CMakeFiles/usb1.dir/libusb/hotplug.c.o	b961fe30f770c59d
+277	358	1795354854413087054	CMakeFiles/rtlsdr.dir/rtlsdr/tuner_e4k.c.o	6ee6afdba533249f
+217	509	1795354854568088022	CMakeFiles/rtlsdr.dir/rtlsdr/librtlsdr.c.o	bb01dac1fe9e7f3f
+612	621	1795354854682759741	librtlsdr.a	a7b2a9e7d1399c65
+154	216	1795354854272086173	CMakeFiles/usb1.dir/libusb/os/threads_posix.c.o	3b5109b6133cbbb0
+2	154	1795354854209085780	CMakeFiles/usb1.dir/libusb/strerror.c.o	5c979a4ac3df9a02
+111	186	1795354854245086005	CMakeFiles/usb1.dir/libusb/os/events_posix.c.o	2f3f3b9f196b40eb
+370	613	1795354854673088678	CMakeFiles/catsdr.dir/catsdr.c.o	c2d0d003e16e4c3f
+336	435	1795354854494087560	CMakeFiles/rtlsdr.dir/rtlsdr/tuner_fc0013.c.o	34e1091a91d684d8
+0	366	1795354854417087079	CMakeFiles/usb1.dir/libusb/io.c.o	de7bc359e9238d7d
+186	277	1795354854336086573	CMakeFiles/usb1.dir/libusb/os/linux_netlink.c.o	5d221aafe78ef778
+104	598	1795354854658088584	CMakeFiles/usb1.dir/libusb/os/linux_usbfs.c.o	ff4840359e96355d
+0	336	1795354854392086923	CMakeFiles/usb1.dir/libusb/core.c.o	a060dce5f272a6e7
+1	48	1795354959282741868	/home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so	9533ee9ee65999dc
+0	309	1795355029298179052	CMakeFiles/catsdr.dir/catsdr.c.o	c2d0d003e16e4c3f
+309	367	1795355029355179407	/home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so	9533ee9ee65999dc
