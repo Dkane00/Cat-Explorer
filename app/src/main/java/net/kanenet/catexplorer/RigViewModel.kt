@@ -546,6 +546,21 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private val _sdrGain = MutableStateFlow(prefs.getInt("sdr_gain", -1))
+    /** Gain of the tablet's RTL-SDR in tenths of a dB; -1 is automatic. */
+    val sdrGain = _sdrGain.asStateFlow()
+    fun setSdrGain(tenths: Int) { _sdrGain.value = tenths; prefs.edit().putInt("sdr_gain", tenths).apply() }
+
+    private val _sdrGains = MutableStateFlow(
+        prefs.getString("sdr_gains", "").orEmpty().split(",").mapNotNull { it.toIntOrNull() },
+    )
+    /** The gain steps the tablet's RTL-SDR offers (tenths of a dB), remembered from the last time it ran. */
+    val sdrGains = _sdrGains.asStateFlow()
+
+    private val _sdrDirect = MutableStateFlow(false)
+    /** The tablet's RTL-SDR is sampling HF directly right now, so its gain has no effect. */
+    val sdrDirect = _sdrDirect.asStateFlow()
+
     /** An RTL-SDR is plugged into the tablet (checked when the radio connects over USB and when the card is shown). */
     private val _tabletSdr = MutableStateFlow(false)
     val tabletSdr = _tabletSdr.asStateFlow()
@@ -573,7 +588,12 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
                 var sdr: net.kanenet.catexplorer.audio.RtlSdr? = null
                 try {
                     var centre = T.centreFor(dial)
-                    sdr = net.kanenet.catexplorer.audio.RtlSdr.open(getApplication(), T.RATE, centre, -1, 0, T.FFT)
+                    var gain = _sdrGain.value
+                    sdr = net.kanenet.catexplorer.audio.RtlSdr.open(getApplication(), T.RATE, centre, gain, 0, T.FFT)
+                    val steps = sdr.gains().toList()
+                    _sdrGains.value = steps
+                    prefs.edit().putString("sdr_gains", steps.joinToString(",")).apply()
+                    _sdrDirect.value = sdr.directSampling()
                     _wideMode.value = true
                     val w = wide ?: net.kanenet.catexplorer.audio.WideEngine().also { wide = it }
                     w.rangeDb = _waterfallRange.value.toFloat()
@@ -587,7 +607,11 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
                         if (st.activeHz > 0) dial = st.activeHz
                         if (!T.inRange(dial, centre)) {
                             centre = T.centreFor(dial); sdr.tune(centre); skip = 2
+                            // moving in or out of direct sampling restarts the tuner, which can forget its gain
+                            sdr.setGain(gain)
+                            _sdrDirect.value = sdr.directSampling()
                         }
+                        if (_sdrGain.value != gain) { gain = _sdrGain.value; sdr.setGain(gain); w.resetFloor(); skip = 1 }
                         sdr.readSpectrum(power, T.FFTS_PER_FRAME, stats)
                         if (skip > 0) { skip--; continue }
                         val f = T.frame(power, centre, dial, overload = stats[1] > 0 && stats[0] * 1000 > stats[1]) ?: continue

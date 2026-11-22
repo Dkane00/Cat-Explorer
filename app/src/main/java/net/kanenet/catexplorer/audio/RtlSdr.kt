@@ -21,7 +21,11 @@ class RtlSdr private constructor(private val conn: UsbDeviceConnection, private 
     /** [tenthsDb] < 0 is automatic gain. Only matters above 24 MHz: below that the dongle samples directly, with no amplifier. */
     fun setGain(tenthsDb: Int) { nativeSetGain(handle, tenthsDb) }
 
+    /** The tuner's gain steps, in tenths of a dB (empty if it has none). */
     fun gains(): IntArray = nativeGains(handle)
+
+    /** True while the dongle samples HF directly (an RTL-SDR Blog V3 below 24 MHz): the tuner, and its gain, aren't used. */
+    fun directSampling(): Boolean = nativeDirectSampling(handle) != 0
 
     /**
      * Blocks until [ffts] FFTs' worth of samples have arrived and writes their average power into [out] (size [fftSize],
@@ -74,6 +78,7 @@ class RtlSdr private constructor(private val conn: UsbDeviceConnection, private 
         @JvmStatic private external fun nativeReadSpectrum(h: Long, out: FloatArray, ffts: Int, stats: IntArray): Int
         @JvmStatic private external fun nativeClose(h: Long)
         @JvmStatic private external fun nativeLastError(): Int
+        @JvmStatic private external fun nativeDirectSampling(h: Long): Int
     }
 }
 

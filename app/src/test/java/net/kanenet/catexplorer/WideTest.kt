@@ -52,4 +52,13 @@ class WideTest {
         val rf = w.refinePeak(7_120_250.0, 300.0)   // tapped 250 Hz off
         assertEquals(7_120_030.0, rf, 40.0)
     }
+
+    @Test fun aBandChangeMeasuresTheNoiseAfresh() {
+        val w = WideEngine(width = 1000, height = 10)
+        w.add(SpecFrame(7_100_000, 125f, FloatArray(1600) { 30f }, false), frozen = false)
+        assertEquals(30f, w.floorDb, 0.01f)
+        // 14 MHz is far outside the 200 kHz picture: the first row there sets the floor by itself
+        w.add(SpecFrame(14_100_000, 125f, FloatArray(1600) { 60f }, false), frozen = false)
+        assertEquals(60f, w.floorDb, 0.01f)
+    }
 }

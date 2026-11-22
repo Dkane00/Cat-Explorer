@@ -22,3 +22,5 @@
 1	48	1795354959282741868	/home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so	9533ee9ee65999dc
 0	309	1795355029298179052	CMakeFiles/catsdr.dir/catsdr.c.o	c2d0d003e16e4c3f
 309	367	1795355029355179407	/home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so	9533ee9ee65999dc
+0	245	1795356473649406595	CMakeFiles/catsdr.dir/catsdr.c.o	c2d0d003e16e4c3f
+245	282	1795356473686406836	/home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so	9533ee9ee65999dc

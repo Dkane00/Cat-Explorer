@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.kanenet.catexplorer.RigViewModel
+import kotlin.math.roundToInt
 
 /** Settings panel that slides in over the right side, so the screen behind stays visible while colours change. */
 @Composable
@@ -149,6 +150,8 @@ private fun SettingsList(vm: RigViewModel, theme: ThemeSettings, onClose: () -> 
                     fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp),
                 )
             }
+            Spacer(Modifier.height(4.dp))
+            SdrGainSetting(vm, theme)
             Spacer(Modifier.height(8.dp))
             SectionTitle("Tune button")
             val carrier by vm.tuneCarrier.collectAsState()
@@ -275,4 +278,38 @@ private fun ColorEditor(vm: RigViewModel, theme: ThemeSettings, role: ThemeColor
             }) { Text("OK") }
         }
     }
+}
+
+/** Gain for an RTL-SDR plugged into the tablet: automatic, or one of the steps the dongle reports. */
+@Composable
+private fun SdrGainSetting(vm: RigViewModel, theme: ThemeSettings) {
+    val gain by vm.sdrGain.collectAsState()
+    val steps by vm.sdrGains.collectAsState()
+    val direct by vm.sdrDirect.collectAsState()
+    Text("SDR gain (RTL-SDR on the tablet)", Modifier.padding(top = 4.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(gain < 0, { vm.setSdrGain(-1) }, { Text("Auto") }, colors = selectedBlue())
+        FilterChip(gain >= 0, { if (gain < 0) vm.setSdrGain(steps.getOrElse(steps.size / 2) { 0 }) }, { Text("Manual") },
+            enabled = steps.isNotEmpty(), colors = selectedBlue())
+    }
+    if (gain >= 0 && steps.isNotEmpty()) {
+        // the slider moves through the dongle's own steps; the nearest step is shown if the saved value isn't one of them
+        val idx = steps.indices.minBy { kotlin.math.abs(steps[it] - gain) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Slider(
+                idx.toFloat(), { vm.setSdrGain(steps[it.roundToInt().coerceIn(0, steps.lastIndex)]) },
+                valueRange = 0f..steps.lastIndex.toFloat(), steps = (steps.size - 2).coerceAtLeast(0), modifier = Modifier.weight(1f),
+            )
+            Text("%.1f dB".format(steps[idx] / 10.0), Modifier.width(72.dp))
+        }
+    }
+    Text(
+        when {
+            steps.isEmpty() -> "Open the Waterfall once with the RTL-SDR plugged in and its gain steps appear here."
+            direct -> "Right now the SDR samples HF directly (an RTL-SDR Blog V3 below 24 MHz), so gain has no effect; it applies on " +
+                "10 m and 6 m, and on SDRs with an HF front end. Lower it if the waterfall says the SDR is overloaded."
+            else -> "Higher gain shows weaker signals; lower it if the waterfall says the SDR is overloaded or the band looks smeared."
+        } + " An SDR on the PC has its own gain in the Panadapter window.",
+        fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp),
+    )
 }

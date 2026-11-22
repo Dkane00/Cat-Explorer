@@ -288,7 +288,8 @@ class WideEngine(override val width: Int = 1000, override val height: Int = 220)
     fun shift(px: Int) {
         if (px == 0) return
         synchronized(lock) {
-            if (kotlin.math.abs(px) >= width) { levels.fill(0); trace.fill(0f); return }
+            // a jump past the whole picture is a new band: its noise level may be quite different, so measure afresh
+            if (kotlin.math.abs(px) >= width) { levels.fill(0); trace.fill(0f); floorDb = Float.NaN; return }
             for (y in 0 until height) {
                 val o = y * width
                 if (px > 0) {
@@ -302,6 +303,9 @@ class WideEngine(override val width: Int = 1000, override val height: Int = 220)
             trace.fill(0f)
         }
     }
+
+    /** Forget the measured noise level (after a gain change, for example) so the colours settle at once. */
+    fun resetFloor() { floorDb = Float.NaN }
 
     fun clear() = synchronized(lock) { levels.fill(0); trace.fill(0f) }
 

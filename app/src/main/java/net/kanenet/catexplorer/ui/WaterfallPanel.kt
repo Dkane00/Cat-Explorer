@@ -85,7 +85,7 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
                 @Suppress("UNUSED_EXPRESSION") frame   // re-read the clip level as rows arrive
                 when {
                     status.isNotEmpty() -> Text(status, fontSize = 12.sp, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
-                    wideMode && w?.overload == true -> Text(if (s.directUsb) "SDR overloaded — use a shorter antenna or an attenuator" else "SDR overloaded — lower its gain in the Panadapter window", fontSize = 12.sp, color = th[ThemeColor.HIST_SWR], modifier = Modifier.weight(1f))
+                    wideMode && w?.overload == true -> Text(if (s.directUsb) "SDR overloaded — lower the SDR gain in Settings, or use a shorter antenna" else "SDR overloaded — lower its gain in the Panadapter window", fontSize = 12.sp, color = th[ThemeColor.HIST_SWR], modifier = Modifier.weight(1f))
                     clip > 0.001f -> Text("Audio too loud — turn down the sound card's input level on the PC", fontSize = 12.sp, color = th[ThemeColor.HIST_SWR], modifier = Modifier.weight(1f))
                 }
             }

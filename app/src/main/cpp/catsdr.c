@@ -111,6 +111,14 @@ Java_net_kanenet_catexplorer_audio_RtlSdr_nativeSetGain(JNIEnv *env, jclass cls,
     return rtlsdr_set_tuner_gain(s->dev, gainTenths);
 }
 
+/* 1 or 2 while the dongle samples HF directly (no tuner, so no gain control), 0 when the tuner is in use. */
+JNIEXPORT jint JNICALL
+Java_net_kanenet_catexplorer_audio_RtlSdr_nativeDirectSampling(JNIEnv *env, jclass cls, jlong h) {
+    (void)env; (void)cls;
+    sdr_t *s = (sdr_t *)(intptr_t)h;
+    return rtlsdr_get_direct_sampling(s->dev);
+}
+
 /* The tuner's gain steps in tenths of a dB. */
 JNIEXPORT jintArray JNICALL
 Java_net_kanenet_catexplorer_audio_RtlSdr_nativeGains(JNIEnv *env, jclass cls, jlong h) {
