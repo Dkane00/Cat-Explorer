@@ -5,6 +5,11 @@
 #   sudo ./install.sh         install for every user on this PC
 #   ./install.sh --uninstall  remove it again (use sudo if it was installed with sudo)
 #
+#   --sdr-software            also install the SDR software (numpy, SoapySDR and its modules) without asking
+#   --no-sdr-software         don't offer it
+#
+# The SDR software is optional: a sound card needs none of it. It's installed with apt (your password is asked for),
+# and if SDRplay's own API is already installed, SoapySDR's SDRplay module is built too.
 # It copies the panadapter and its window to an install folder, puts the Cat Explorer icon into the desktop icon
 # theme, adds "Cat Explorer Panadapter" to the Ham Radio folder of the start menu (creating that folder if
 # your system doesn't have one), and adds a `cat-panadapter` command that opens the window.
@@ -51,7 +56,43 @@ stop_running_panadapter() {
     fi
 }
 
-if [[ ${1:-} == --uninstall ]]; then
+SDR_SOFTWARE=ask
+UNINSTALL=
+for arg in "$@"; do
+    case $arg in
+        --uninstall) UNINSTALL=1 ;;
+        --sdr-software) SDR_SOFTWARE=yes ;;
+        --no-sdr-software) SDR_SOFTWARE=no ;;
+        *) echo "Unknown option: $arg (see the top of this script)"; exit 2 ;;
+    esac
+done
+
+# SDRplay's API (their closed driver) installs this library; SoapySDR's SDRplay module needs it to build and run
+sdrplay_api_present() { [[ -e /usr/local/lib/libsdrplay_api.so || -e /usr/lib/libsdrplay_api.so ]] || ldconfig -p 2>/dev/null | grep -q libsdrplay_api; }
+soapy_has_sdrplay() { command -v SoapySDRUtil >/dev/null && SoapySDRUtil --info 2>/dev/null | grep -qi sdrplay; }
+
+as_root() { if [[ $EUID -eq 0 ]]; then "$@"; else sudo "$@"; fi; }
+
+install_sdr_software() {
+    if ! command -v apt-get >/dev/null; then
+        echo "This system has no apt; install numpy, SoapySDR and its modules with your package manager."
+        return 1
+    fi
+    echo "Installing the SDR software (numpy, SoapySDR and its modules)…"
+    as_root apt-get install -y python3-numpy python3-soapysdr soapysdr-tools soapysdr-module-all || return 1
+    if sdrplay_api_present && ! soapy_has_sdrplay; then
+        echo "SDRplay's API is installed: building SoapySDR's SDRplay module (SoapySDRPlay3)…"
+        as_root apt-get install -y build-essential cmake git libsoapysdr-dev || return 1
+        local src="$HOME/.local/src/SoapySDRPlay3"
+        if [[ -d $src/.git ]]; then git -C "$src" pull -q || true; else git clone -q https://github.com/pothosware/SoapySDRPlay3 "$src"; fi
+        mkdir -p "$src/build"
+        (cd "$src/build" && cmake .. >/dev/null && make -j"$(nproc)" >/dev/null) || return 1
+        (cd "$src/build" && as_root make install >/dev/null && as_root ldconfig) || return 1
+        echo "SoapySDR's SDRplay module is installed."
+    fi
+}
+
+if [[ -n $UNINSTALL ]]; then
     echo "Removing the Cat Explorer Panadapter for $SCOPE…"
     stop_running_panadapter
     rm -rf "$APP_DIR"
@@ -77,16 +118,6 @@ if (( ${#missing[@]} )); then
     exit 1
 fi
 
-# optional: the RTL-SDR wide panadapter needs numpy and RTL-SDR Blog's rtl_tcp
-sdr_notes=()
-python3 -c 'import numpy' 2>/dev/null || sdr_notes+=("numpy is missing:  sudo apt install python3-numpy")
-if [[ ! -x $HOME/.local/opt/rtl-sdr-blog/bin/rtl_tcp && ! -x /opt/rtl-sdr-blog/bin/rtl_tcp && ! -x /usr/local/bin/rtl_tcp ]]; then
-    sdr_notes+=("RTL-SDR Blog's driver isn't built yet (Ubuntu's rtl-sdr package can't do HF) — see \"RTL-SDR\" in the README")
-fi
-# optional: other SDRs (SDRplay, Airspy, HackRF, LimeSDR, PlutoSDR...) go through SoapySDR
-other_notes=()
-python3 -c 'import SoapySDR' 2>/dev/null || other_notes+=("SoapySDR:  sudo apt install python3-soapysdr soapysdr-module-all")
-other_notes+=("SDRplay also needs SDRplay's API (sdrplay.com) and SoapySDRPlay3 — see \"Other SDRs\" in the README")
 
 # ---- the earlier "Cat Explorer Audio Helper" name: stop it and remove it, so the two don't fight over the port ----
 OLD=cat-explorer-audio-helper
@@ -170,8 +201,42 @@ EOF
     echo "Added a Ham Radio folder to the start menu."
 fi
 
-
 refresh_menus
+
+# ---- optional SDR software: numpy (every SDR), SoapySDR and its modules (SDRplay, Airspy, HackRF, LimeSDR…) ----
+need_sdr=
+python3 -c 'import numpy' 2>/dev/null || need_sdr=1
+python3 -c 'import SoapySDR' 2>/dev/null || need_sdr=1
+command -v SoapySDRUtil >/dev/null || need_sdr=1
+if command -v dpkg >/dev/null; then dpkg -s soapysdr-module-all >/dev/null 2>&1 || need_sdr=1; fi
+sdrplay_api_present && ! soapy_has_sdrplay && need_sdr=1
+if [[ -n $need_sdr && $SDR_SOFTWARE != no ]]; then
+    if [[ $SDR_SOFTWARE == ask ]]; then
+        if [[ -t 0 ]]; then
+            echo
+            echo "Using an SDR (RTL-SDR, SDRplay, Airspy, HackRF, LimeSDR…) for the wide panadapter needs some more software:"
+            echo "numpy, SoapySDR and its SDR modules, from apt. A sound card needs none of it."
+            read -r -p "Install the SDR software now? It asks for your password. [y/N] " reply
+            [[ $reply == [yY]* ]] && SDR_SOFTWARE=yes
+        fi
+    fi
+    if [[ $SDR_SOFTWARE == yes ]]; then
+        install_sdr_software || echo "The SDR software didn't install completely; see the messages above. The panadapter itself is installed."
+    fi
+fi
+
+# notes for whatever is still missing
+sdr_notes=()
+python3 -c 'import numpy' 2>/dev/null || sdr_notes+=("numpy:  sudo apt install python3-numpy")
+if [[ ! -x $HOME/.local/opt/rtl-sdr-blog/bin/rtl_tcp && ! -x /opt/rtl-sdr-blog/bin/rtl_tcp && ! -x /usr/local/bin/rtl_tcp ]]; then
+    sdr_notes+=("RTL-SDR: build RTL-SDR Blog's driver for HF (Ubuntu's rtl-sdr package can't do HF) — see \"RTL-SDR\" in the README")
+fi
+python3 -c 'import SoapySDR' 2>/dev/null || sdr_notes+=("Other SDRs:  sudo apt install python3-soapysdr soapysdr-module-all   (or run this again with --sdr-software)")
+if ! sdrplay_api_present; then
+    sdr_notes+=("SDRplay: install SDRplay's API from https://www.sdrplay.com/downloads/ (Linux, \"API\"), then run this again with --sdr-software")
+elif ! soapy_has_sdrplay; then
+    sdr_notes+=("SDRplay: its API is installed but SoapySDR's SDRplay module isn't — run this again with --sdr-software")
+fi
 
 echo
 echo "Installed:"
@@ -182,9 +247,6 @@ echo "  command     cat-panadapter"
 echo "Open it from the menu, choose the radio's sound card (or an SDR) and press Start."
 if (( ${#sdr_notes[@]} )); then
     echo
-    echo "Only needed for an RTL-SDR:"
+    echo "Only needed if you use an SDR:"
     printf '  %s\n' "${sdr_notes[@]}"
 fi
-echo
-echo "Only needed for other SDRs:"
-printf '  %s\n' "${other_notes[@]}"

@@ -116,7 +116,7 @@ doc.addPageTemplates([PageTemplate(id='first', frames=[frame]), PageTemplate(id=
 s = []
 # ---------------------------------------------------------------- cover
 s += [Spacer(1, 1.2 * inch), P('Cat Explorer', title), Spacer(1, 6), P('User Guide', subtitle), Spacer(1, 4),
-      P('A touchscreen controller for the Yaesu FT-891', subtitle), Spacer(1, 2), P('Version 1.1.0', subtitle), Spacer(1, 0.4 * inch), img('02-main', W), Spacer(1, 0.4 * inch)]
+      P('A touchscreen controller for the Yaesu FT-891', subtitle), Spacer(1, 2), P('Version 1.2.0', subtitle), Spacer(1, 0.4 * inch), img('02-main', W), Spacer(1, 0.4 * inch)]
 s += box('Cat Explorer is built for the <b>Yaesu FT-891</b> only. Its controls, meter scales, filter widths and memory '
          'channels are all written for that radio, so it will not work properly with any other model.')
 s += [NextPageTemplate('rest'), PageBreak()]
@@ -129,8 +129,9 @@ s += [P('Contents', h1x), toc, PageBreak()]
 s += [P('1. Welcome', h1),
       P('Cat Explorer lets you see and control your FT-891 from an Android tablet or phone. It shows the frequency, mode, filter '
         'width and meters live, and gives you touch controls for the radio\'s everyday functions: tuning, bands, memories, DSP and '
-        'filter settings, mic equalizer, CW, FM and voice messages, and an antenna-tuning button. With a FLRig connection it can also show a '
-        'waterfall of the band, with band edges and license privileges marked, and tune to a signal when you tap it.'),
+        'filter settings, mic equalizer, CW, FM and voice messages, and an antenna-tuning button. It can also show a '
+        'waterfall of the band, with band edges and license privileges marked, and tune to a signal when you tap it: through FLRig, or '
+        'with an SDR plugged straight into the tablet.'),
       P('You can connect in either of two ways:'),
       ] + B(['<b>Directly over USB.</b> Plug the radio into the tablet with a USB-C OTG cable. No computer is needed.',
              '<b>Through FLRig.</b> Run FLRig on the computer that the radio is plugged into and connect the tablet to it over your '
@@ -316,8 +317,8 @@ s += [*sec('7. Meters and signal history'),
       P('The <b>Signal history</b> tab of the card under the buttons draws the recent past, newest on the right. It shows the <b>S</b> '
         'meter (blue) while you receive and the <b>PWR</b> (green) and <b>SWR</b> (amber) traces while you transmit. Each trace is a solid '
         'line with a lighter fill of the same colour underneath. Transmit periods are shaded red.'),
-      P('With a FLRig connection the same card has a second tab, <b>Waterfall</b> (section 15). The card grows a little taller while '
-        'the waterfall is showing.')]
+      P('The same card has a second tab, <b>Waterfall</b> (section 15), with a FLRig connection or with an SDR plugged into the '
+        'tablet. The card grows a little taller while the waterfall is showing.')]
 
 # ---------------------------------------------------------------- 8 sliders
 s += [*sec('8. Sliders'),
@@ -480,7 +481,9 @@ s += [*sec('14. Settings', 4.6),
                  'Changing it recolours the whole waterfall at once.'),
                P('<b>Band edges (US)</b> turns the band-edge lines and dimming on or off (section 15).'),
                P('<b>License bars</b> chooses the bars under the waterfall: <b>Off</b>, one class (<b>Technician</b>, <b>General</b>, '
-                 '<b>Advanced</b> or <b>Extra</b>), or <b>All four</b>. Pick your own class to see at a glance where you may transmit.')],
+                 '<b>Advanced</b> or <b>Extra</b>), or <b>All four</b>. Pick your own class to see at a glance where you may transmit.'),
+               P('<b>SDR gain</b> sets the gain of an SDR plugged into the tablet: <b>Auto</b>, or <b>Manual</b> with a slider. It is '
+                 'the same setting as the <b>Gain</b> button on the waterfall (section 15).')],
               img('31-settings-waterfall', 2.5 * inch)]], colWidths=[4.4 * inch, 2.6 * inch],
             style=TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'), ('LEFTPADDING', (0, 0), (0, 0), 0)])),
       *H2('Colours'),
@@ -500,23 +503,28 @@ s += [*sec('14. Settings', 4.6),
         '(dark or light). Your other settings are not changed.')]
 
 # ---------------------------------------------------------------- 15 waterfall
-s += [*sec('15. Waterfall and panadapter (FLRig connection)', 4.6),
+s += [*sec('15. Waterfall and panadapter', 4.6),
       P('The <b>Waterfall</b> tab of the card under the buttons shows signals as coloured traces that scroll down the screen, with a '
         'live spectrum line above them. Tap a signal to tune to it. The radio itself has no band-scope output, so the picture comes from '
-        'a small program on the FLRig PC, <b>Cat Explorer Panadapter</b>, which sends it to the tablet over the network. It can work in '
-        'two ways:')] + B([
-          '<b>From the radio\'s audio</b> (any sound card wired to the radio). You see everything inside your receive filter, about '
-          '0 to 4 kHz. No extra hardware needed.',
-          '<b>From an RTL-SDR</b> plugged into the PC. You see up to 200 kHz of the band around your dial, with real frequencies.']) + [
-      Spacer(1, 4)] + box('The waterfall needs a FLRig connection and the Panadapter running on the same PC as FLRig. It is not '
-                          'available over a direct USB connection, because the tablet cannot get the radio\'s audio over the USB cable.') + [
+        'somewhere else, in one of three ways:')] + B([
+          '<b>From the radio\'s audio</b>, through FLRig: a small program on the FLRig PC, <b>Cat Explorer Panadapter</b>, records the '
+          'sound card wired to the radio and sends it to the tablet. You see everything inside your receive filter, about 0 to 4 kHz. '
+          'No extra hardware needed.',
+          '<b>From an SDR on the PC</b>, through FLRig: the Panadapter runs an SDR (an RTL-SDR, or an SDRplay, Airspy, HackRF and '
+          'others) and sends up to 200 kHz of the band around your dial, with real frequencies.',
+          '<b>From an SDR plugged into the tablet</b>, over a direct USB connection: the app runs the SDR itself, no PC needed. The same '
+          'wide view as an SDR on the PC.']) + [
+      Spacer(1, 4)] + box('Over a direct USB connection only an SDR plugged into the tablet works: the radio\'s USB port carries no '
+                          'audio, so there is no audio waterfall that way.') + [
       *H2('Setting up the PC'),
       P('In the Cat Explorer folder on the PC, run <font face="Mono">pc-panadapter/install.sh</font>. It adds <b>Cat Explorer '
         'Panadapter</b> to the <b>Ham Radio</b> folder of the start menu. Run it with <font face="Mono">sudo</font> to install it for '
-        'every user, or with <font face="Mono">--uninstall</font> to remove it. The README on GitHub has the details, including the '
-        'one-time setup for an RTL-SDR.'),
+        'every user, or with <font face="Mono">--uninstall</font> to remove it. It then offers to install the extra software an SDR '
+        'needs (numpy and SoapySDR, from your system\'s software source); answer <b>y</b> if you will use an SDR on the PC. It asks for '
+        'your password for that part. The README on GitHub has the details, including the one-time setup for an RTL-SDR on HF.'),
       shot('34-panadapter-window', 'The Cat Explorer Panadapter window on the PC.', width=4.6 * inch),
-      P('Open it from the menu, pick the <b>Source</b> (the radio\'s sound card, or <b>RTL-SDR — wide panadapter</b>) and press '
+      P('Open it from the menu, pick the <b>Source</b> (the radio\'s sound card, or an SDR: <b>RTL-SDR — wide panadapter</b>, or '
+        'another SDR shown as <b>… — wide panadapter (SoapySDR)</b>) and press '
         '<b>Start</b>. The window shows whether it is running, the PC\'s addresses, which tablets are connected and the audio level. '
         'You can close the window: the panadapter keeps running until you open it again and press <b>Stop</b>. If the window or the app '
         'says the audio is too loud, turn the sound card\'s input level down on the PC.'),
@@ -529,14 +537,54 @@ s += [*sec('15. Waterfall and panadapter (FLRig connection)', 4.6),
           'Tapping does nothing in AM and FM.']) + [
       P('<b>Listen</b> also plays the radio\'s audio on the tablet. <b>Range</b> sets how many dB the colours cover: a smaller range '
         'makes weak signals brighter.'),
-      *H2('RTL-SDR panadapter'),
-      shot('30-waterfall-sdr', 'The RTL-SDR view on 40 m with the General license bar.'),
-      P('With an RTL-SDR the scale is the real frequency in MHz. The red line is your dial and the shaded area is your receive '
+      *H2('SDR panadapter'),
+      shot('30-waterfall-sdr', 'The SDR view on 40 m (an RTL-SDR on the PC) with the General license bar.'),
+      P('With an SDR the scale is the real frequency in MHz. The red line is your dial and the shaded area is your receive '
         'filter. <b>Span</b> sets how wide a slice you see, from 200 kHz down to 10 kHz. The PC follows the radio\'s frequency through '
         'FLRig, so the picture moves with your dial and changes band when you do. Tap a signal to tune to it; in CW and DATA the tap snaps '
         'to the nearest signal, and in DATA the signal lands at 1500 Hz in your audio. The picture pauses while you transmit.')] + box(
           'Never connect the SDR to the radio\'s antenna socket: one transmission would destroy it. Give it its own receive antenna, '
           'or use a T/R switch keyed by the radio.', 'Careful') + [
+      *H2('SDR on the tablet (USB connection)'),
+      P('Plug the radio and the SDR into a powered USB-C hub on the tablet and tap <b>Connect over USB</b>. When the app finds a '
+        'supported SDR, the <b>Waterfall</b> tab appears; the first time, Android asks whether Cat Explorer may use it: tap <b>OK</b>. '
+        'The app keeps the SDR tuned near the radio\'s dial, just as the PC does.'),
+      shot('35-usb-sdr-gain', 'An RTL-SDR on the tablet, with the Gain pop-out open.'),
+      P('The <b>Gain</b> button on the waterfall bar shows the gain setting. Tap it for <b>Auto</b> or <b>Manual</b>; Manual shows a '
+        'slider through the SDR\'s own gain steps. Higher gain shows weaker signals; lower it if the waterfall says the SDR is '
+        'overloaded. On an RTL-SDR Blog V3 below 24 MHz the SDR samples HF directly, so gain has no effect there and the button is '
+        'greyed; it applies on 10 m and 6 m. The same setting is in Settings (section 14).'),
+      ] + table([
+          ['SDR', 'Covers', 'Gain'],
+          ['RTL-SDR (RTL-SDR Blog V3 or V4, and other RTL2832U dongles)', '500 kHz – 1.7 GHz (HF by direct sampling on a V3)', 'dB steps'],
+          ['Airspy R2 or Mini', '24 MHz – 1.8 GHz: 10 m and up only', 'Auto, or levels 0–21'],
+          ['Airspy HF+ or HF+ Discovery', '0 – 31 MHz and 60 – 260 MHz: not 6 m', 'Auto, or 0–48 dB'],
+          ['HackRF One', '1 MHz – 6 GHz', '0–100 dB (no real Auto)'],
+      ], [2.6 * inch, 2.6 * inch, 1.8 * inch]) + [
+      P('If the dial is outside what the SDR covers, the waterfall says so. Only the RTL-SDR has been tried with Cat Explorer on '
+        'real hardware so far; the others use their makers\' published drivers.', small),
+      ] + box('An <b>SDRplay</b> cannot be run by the tablet: SDRplay\'s driver is closed and not available for Android apps. Plug it '
+              'into the FLRig PC and use it through the Panadapter there (see <b>SDRplay on the PC</b> below).') + [
+      P('A USB hub with an Ethernet adapter or a charger can add steady, evenly spaced carriers to the picture. If you see lines that '
+        'move when the SDR retunes, try another hub or unplug its extras.', small),
+      *H2('Other SDRs on the PC'),
+      P('Besides the RTL-SDR, the Panadapter can run any SDR that has a ' + "<link href='https://github.com/pothosware/SoapySDR' color='#0B6FA4'><u>SoapySDR</u></link>" + ' module: SDRplay, Airspy, Airspy HF+, HackRF, '
+        'LimeSDR, PlutoSDR and others. Let the installer add the SDR software (or install <font face="Mono">python3-soapysdr</font> '
+        'and <font face="Mono">soapysdr-module-all</font> yourself), plug the SDR in, press <b>Refresh</b> in the Panadapter window and '
+        'choose it under <b>Source</b>. Its <b>SDR gain</b> list is the SDR\'s overall gain; if the SDR\'s automatic gain makes the '
+        'window or the app say it is overloaded, pick a fixed gain instead.'),
+      *H2('SDRplay on the PC'),
+      P('SDRplay radios (RSP1A, RSP1B, RSPdx, RSPduo and others) need SDRplay\'s own driver on the PC as well as SoapySDR. Set it up '
+        'once, in this order:')] + B([
+          '<b>SDRplay\'s API</b> (their driver, free but closed): download the Linux <b>API</b> installer from ' + "<link href='https://www.sdrplay.com/downloads/' color='#0B6FA4'><u>sdrplay.com/downloads</u></link>" + ', make it '
+          'runnable and run it with <font face="Mono">sudo</font>, accepting SDRplay\'s licence. It installs a background service that the '
+          'SDR needs.',
+          '<b>SoapySDR\'s SDRplay module</b>, ' + "<link href='https://github.com/pothosware/SoapySDRPlay3' color='#0B6FA4'><u>github.com/pothosware/SoapySDRPlay3</u></link>" + ': run the Panadapter installer again with '
+          '<font face="Mono">--sdr-software</font> and it builds and installs this module for you (or build it yourself as its page '
+          'describes).',
+          'Unplug and replug the SDRplay, press <b>Refresh</b> in the Panadapter window and choose it under <b>Source</b>.']) + [
+      P('SoapySDR itself is at ' + "<link href='https://github.com/pothosware/SoapySDR' color='#0B6FA4'><u>github.com/pothosware/SoapySDR</u></link>" + '. To check the SDRplay is found, run <font face="Mono">SoapySDRUtil --find</font> in a '
+        'terminal; it should list it.', small),
       *H2('Band edges and license bars'),
       shot('32-waterfall-edge', 'The bottom of 40 m with all four license bars. Below 7.000 MHz is out of band and dimmed.'),
       P('Both views mark the US (FCC) band plan:')] + B([
@@ -565,7 +613,7 @@ s += [*sec('16. USB and FLRig: what is available'),
           ['Meters, sliders, Tune, IPO/ATT', 'Yes', 'Yes'],
           ['A and B buttons (choose VFO)', 'Greyed out. Use A/B.', 'Yes'],
           ['Card at the bottom (digital-mode bands, CW typed text and F1 to F6 messages, FLRig buttons)', 'Not shown. Use the CW panel\'s keyer memories 1 to 5.', 'Yes'],
-          ['Waterfall and panadapter', 'Not available', 'Yes, with Cat Explorer Panadapter on the FLRig PC'],
+          ['Waterfall and panadapter', 'With an SDR plugged into the tablet (no audio waterfall)', 'Yes, with Cat Explorer Panadapter on the FLRig PC (audio or SDR)'],
           ['Needs a computer', 'No', 'Yes'],
           ['Other software can use the radio at the same time', 'No (the tablet holds the connection)', 'Yes, through FLRig'],
       ], [2.8 * inch, 2.4 * inch, 1.8 * inch]) + [
@@ -579,7 +627,8 @@ s += [*sec('16. USB and FLRig: what is available'),
           ['Tune my antenna', 'Tap Tune (set how it works in Settings).'],
           ['Lock the dial', 'Tap Lock.'],
           ['Swap VFO A and B', 'Tap A/B.'],
-          ['See signals around my frequency', 'Tap the Waterfall tab (FLRig connection, Panadapter running on the PC).'],
+          ['See signals around my frequency', 'Tap the Waterfall tab (through FLRig with the Panadapter running, or with an SDR on the tablet).'],
+          ['Change the SDR\'s gain', 'Tap Gain on the waterfall bar (an SDR on the tablet), or SDR gain in the Panadapter window (an SDR on the PC).'],
           ['Tune to a signal I can see', 'Tap it on the waterfall.'],
           ['See where my license lets me transmit', 'Settings, Waterfall, License bars: choose your class.'],
           ['Change the colours', 'Settings, then tap a colour.'],

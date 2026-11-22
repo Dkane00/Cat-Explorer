@@ -90,10 +90,10 @@ Below 24 MHz a V3 has no amplifier in front, so it needs a decent wire (5–10 m
 
 #### Other SDRs on the PC (SDRplay, Airspy, HackRF, LimeSDR, PlutoSDR…)
 
-Besides the RTL-SDR, the Panadapter can run any SDR that has a [SoapySDR](https://github.com/pothosware/SoapySDR) module, giving the same wide view on the tablet. Install SoapySDR and the common modules:
+Besides the RTL-SDR, the Panadapter can run any SDR that has a [SoapySDR](https://github.com/pothosware/SoapySDR) module, giving the same wide view on the tablet. `pc-panadapter/install.sh` offers to install SoapySDR and its modules for you (answer **y**; it asks for your password), or run it with `--sdr-software` to install them without the question (`--no-sdr-software` skips it). By hand:
 
 ```bash
-sudo apt install python3-soapysdr python3-numpy soapysdr-module-all
+sudo apt install python3-soapysdr python3-numpy soapysdr-tools soapysdr-module-all
 ```
 
 Then plug the SDR in, press **Refresh** in the Panadapter window, choose it from **Source** (it shows as "… — wide panadapter (SoapySDR)") and press **Start**. **SDR gain** is the SDR's overall gain (Auto where the SDR has automatic gain; otherwise a middle setting), and **Correction** and **Test on a fixed frequency** work as for the RTL-SDR. From a terminal: `cat-panadapter-server.py --list`, then `--soapy driver=airspy` (or the `--device soapy:…` the list shows).
@@ -106,7 +106,7 @@ git clone https://github.com/pothosware/SoapySDRPlay3 ~/.local/src/SoapySDRPlay3
 cd ~/.local/src/SoapySDRPlay3 && mkdir -p build && cd build && cmake .. && make && sudo make install && sudo ldconfig
 ```
 
-`SoapySDRUtil --find` should then list the SDRplay. Each SDR's frequency range is its own: an Airspy R2 or Mini starts at 24 MHz (10 m and up, no HF without an upconverter), an Airspy HF+ covers 0–31 MHz and 60–260 MHz, and the window says when the dial is outside the SDR's range. The SoapySDR path itself has been tested end to end with an RTL-SDR Blog V3 through SoapySDR's RTL-SDR module (following FLRig across 10 m and 6 m, manual gain, and the same picture as the RTL-SDR source, not mirrored or shifted). The SDRs above are supported from their published drivers but **haven't been tried with Cat Explorer on real hardware**; reports are welcome. Some SDRs' automatic gain runs hot (the RTL-SDR's own AGC overloads through SoapySDR); if the window or the app says the SDR is overloaded, choose a fixed gain.
+If SDRplay's API is already installed when you run `pc-panadapter/install.sh --sdr-software`, the installer builds and installs SoapySDRPlay3 for you. `SoapySDRUtil --find` should then list the SDRplay. Each SDR's frequency range is its own: an Airspy R2 or Mini starts at 24 MHz (10 m and up, no HF without an upconverter), an Airspy HF+ covers 0–31 MHz and 60–260 MHz, and the window says when the dial is outside the SDR's range. The SoapySDR path itself has been tested end to end with an RTL-SDR Blog V3 through SoapySDR's RTL-SDR module (following FLRig across 10 m and 6 m, manual gain, and the same picture as the RTL-SDR source, not mirrored or shifted). The SDRs above are supported from their published drivers but **haven't been tried with Cat Explorer on real hardware**; reports are welcome. Some SDRs' automatic gain runs hot (the RTL-SDR's own AGC overloads through SoapySDR); if the window or the app says the SDR is overloaded, choose a fixed gain.
 
 #### SDR on the tablet (USB connection, no PC)
 
