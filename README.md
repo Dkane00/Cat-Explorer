@@ -1,6 +1,6 @@
 # Cat Explorer
 
-A touchscreen controller for the **Yaesu FT-891** HF transceiver, for Android tablets and phones. It shows the radio's frequency, mode, filter and meters live and lets you control the radio from the screen, either **through FLRig on a PC** or **directly over USB** with an OTG cable and no PC at all. Inspired by the creater of the CatTouch7USB, Chris Day Zl1CVD.  Use the hardware you already have lying around and put it to good use!
+A touchscreen controller for the **Yaesu FT-891** and **FT-857D** transceivers, for Android tablets and phones. It shows the radio's frequency, mode, filter and meters live and lets you control the radio from the screen, either **through FLRig on a PC** or **directly over USB** with an OTG cable and no PC at all. Inspired by the creater of the CatTouch7USB, Chris Day Zl1CVD.  Use the hardware you already have lying around and put it to good use!
 
 ![Cat Explorer main screen, connected through FLRig, with the RTL-SDR waterfall](docs/screenshot-main.png)
 
@@ -8,8 +8,8 @@ A touchscreen controller for the **Yaesu FT-891** HF transceiver, for Android ta
 
 **Download:** the latest APK is on the [Releases](https://github.com/Dkane00/Cat-Explorer/releases) page.
 
-> **Radio support: FT-891 only, for now.**
-> Most of the CAT (Computer Aided Transceiver) commands in this app are written for the FT-891 and its CAT manual: the DSP and filter settings, meter scales, memory channels, filter-width table and the like. Other Yaesu radios use different commands and ranges, and other brands use different protocols altogether. The app has only been tested on an FT-891. Support for other radios may come but I am limited to the radios that I have to test.
+> **Radio support: FT-891 (tested) and FT-857D (untested).**
+> The app recognises which radio it's talking to. The **FT-891** gets everything (the app was built and tested on one). The **FT-857D** is supported from Yaesu's manual and tested only against a simulated radio, since I don't own one: it speaks a much older, smaller CAT language, so it gets the controls that language offers (see [FT-857D](#ft-857d)). The FT-897D uses the same CAT language and should work the same way, also untested. Other radios that FLRig supports get FLRig's general controls. Reports from FT-857D owners are very welcome.
 
 ## What it does
 
@@ -29,11 +29,21 @@ A touchscreen controller for the **Yaesu FT-891** HF transceiver, for Android ta
 
 ### Directly over USB (no PC)
 
-Plug the radio's USB port into the tablet with a USB-C OTG cable. In the app, enter the baud rate and tap **Connect over USB**. The baud rate must match the radio's CAT RATE (menu 05-06). Android will ask once for permission to use the radio's USB serial bridge.
+Plug the radio's USB port into the tablet with a USB-C OTG cable (an FT-857D: its CAT jack, through a USB CAT cable such as a CT-62-style USB lead). In the app, enter the baud rate and tap **Connect over USB**. The app works out which radio it is (FT-891 or FT-857D); it tries the baud rate you entered first, then the other CAT rates (4800, 9600, 19200, 38400), so it still connects if the radio's CAT RATE menu is set to something else. Android will ask once for permission to use the radio's USB serial bridge.
 
 - The app speaks CAT straight to the radio. FLRig and the PC are not involved.
 - The radio can only be connected to one computer at a time, so with the tablet plugged in the PC cannot use the same USB port (a USB hub does not change this).
 - Some things are not available in this mode: typed CW text (use the keyer memories 1 to 5), FLRig's user buttons, and the A and B VFO buttons (the radio has no CAT command to pick a VFO; use A/B to swap them instead).
+
+### FT-857D
+
+The FT-857D's CAT language is much smaller than the FT-891's: five-byte commands, and the radio can report only its frequency, mode, S-meter, PO meter, transmit/receive, split, a high-SWR warning and (through an undocumented read Hamlib also uses) which VFO is in use. So with an FT-857D:
+
+- **Works, directly over USB:** frequency (typed, Band button, waterfall taps), mode (LSB, USB, CW, CW-R, AM, FM, FM-N, WFM, DIG, PKT), VFO A/B, split, dial lock, the clarifier (**CLAR**: on/off and ±9.99 kHz) and **RPT**: repeater shift and offset, CTCSS tone or DCS code and tone mode (off, Tone, TSQ, DCS). The S and power meters work, and SWR shows OK or HIGH. The waterfall (an SDR on the tablet, or through FLRig) works the same as with the FT-891.
+- **Set-only:** lock, clarifier, repeater and tone settings can't be read back, so the app shows what it last sent. The VFO not in use isn't shown until the app has seen it. Setting it switches to that VFO, sets it and switches back.
+- **Not possible over the FT-857D's CAT:** volume, RF gain, mic gain, transmit power, filter widths, DSP, memories, the tuner, CW keying, and copying VFO A to B. The app hides those controls, and the **Tune** button too, because the radio's power can't be lowered over CAT for a tuning carrier. The radio's undocumented memory-write commands are deliberately not used: a wrong guess there could overwrite its calibration.
+- **Through FLRig:** set FLRig up for the FT-857D and the app uses FLRig's general controls (frequency, mode, PTT, meters, split, A/B).
+- **CAT console:** type five-byte commands in hex, e.g. `00 00 00 00 03` (read frequency and mode); the reply comes back in hex.
 
 ### Through FLRig on a PC
 
@@ -158,6 +168,7 @@ The user guide PDF is built from `docs/guide/make-guide.py` and the screenshots 
 - `rig/FlrigClient.kt` and `rig/XmlRpc.kt`: the FLRig connection (a small XML-RPC client).
 - `rig/UsbCatClient.kt` and `rig/UsbLink.kt`: the direct USB connection (CAT over the radio's CP2105 serial bridge, using the [usb-serial-for-android](https://github.com/mik3y/usb-serial-for-android) library).
 - `rig/YaesuDsp.kt`: FT-891 CAT command strings and reply parsers.
+- `rig/Ft857Cat.kt` and `rig/Ft857Client.kt`: the FT-857D's five-byte CAT language and its direct connection; `rig/RadioModel.kt` decides which radio's controls to show.
 - `audio/`: the waterfall: `AudioLink.kt` (the stream from the PC Panadapter: audio with Listen playback, or SDR spectrum lines) and `Waterfall.kt` (FFT, waterfall rows, the SDR view's `WideEngine`, tap-to-tune maths).
 - `pc-panadapter/cat-panadapter-server.py`: the PC side of the waterfall; `pc-panadapter/cat-panadapter.py` is its window.
 - `RigViewModel.kt`: the polling loop and command dispatch.
@@ -165,6 +176,7 @@ The user guide PDF is built from `docs/guide/make-guide.py` and the screenshots 
 
 ## Status and limits
 
+- FT-857D support is untested on a real radio: it was written from Yaesu's FT-857D manual (and Hamlib's driver for the VFO read) and tested against a simulated FT-857D.
 - Tested on an FT-891 with a Samsung Galaxy Tab S6 Lite (Android 16). The FLRig path has had the most use. The USB path is newer: reading the radio, width changes, the A/B swap, Tune and the Band button have been tested over USB, while other controls have had less testing there.
 - The radio's spectrum scope can't be shown because the FT-891 doesn't send scope data over CAT. The waterfall shows only the receive passband (see above).
 - The radio can't store a filter width in a memory channel over CAT.

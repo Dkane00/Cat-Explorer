@@ -20,7 +20,8 @@ import net.kanenet.catexplorer.RigViewModel
 import net.kanenet.catexplorer.rig.YaesuDsp
 
 /** The feature panels that open on the main screen from the CW / FM / VOICE buttons. */
-enum class Feature(val label: String) { CW("CW"), FM("FM"), VOICE("VOICE") }
+/** Settings panels opened from the chip row: the FT-891's CW, FM and VOICE, and the FT-857D's clarifier and repeater. */
+enum class Feature(val label: String) { CW("CW"), FM("FM"), VOICE("VOICE"), CLAR("CLAR"), RPT("RPT") }
 
 private val LABEL: Color @Composable get() = LocalThemeSettings.current[ThemeColor.LABEL]
 

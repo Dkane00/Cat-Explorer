@@ -188,6 +188,7 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun refreshDsp() {
         val c = client ?: return
         if (pollPaused) return
+        if (_state.value.model != net.kanenet.catexplorer.rig.RadioModel.FT891) return   // these are the FT-891's own CAT reads
         runCatching { withContext(Dispatchers.IO) { c.readDsp(_dsp.value) } }.onSuccess { _dsp.value = it }
     }
 
@@ -283,12 +284,12 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         prefs.edit().putInt("usb_baud", baud).apply()
         _baud.value = baud
         disconnect()
-        startPolling { UsbLink.open(getApplication(), baud) }
+        startPolling("Looking for the radio (FT-891 or FT-857D)…") { UsbLink.open(getApplication(), baud) }
     }
 
-    private fun startPolling(open: () -> RigClient) {
+    private fun startPolling(status: String = "Connecting…", open: () -> RigClient) {
         pollJob = viewModelScope.launch(Dispatchers.IO) {
-            _state.value = RigState(error = "Connecting…")
+            _state.value = RigState(error = status)
             val c = try { open() } catch (e: Exception) {
                 _state.value = RigState(error = e.message ?: "Couldn't connect")
                 return@launch
@@ -304,10 +305,13 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
                         if (info == null || tick % 100 == 0) info = c.readStatic()
                         val i = info!!
                         val polled = c.poll(_state.value, FlrigClient.supportsYaesuMeters(i.xcvr))
-                        val next = polled.copy(
+                        var next = polled.copy(
                             xcvr = i.xcvr, flrigVersion = i.version, modes = i.modes,
                             bandwidths = i.bandwidths.ifEmpty { polled.bandwidths }, maxPower = i.maxPower,
                         )
+                        // the FT-857D has no CAT control of these, whatever numbers FLRig reports for them
+                        if (next.model == net.kanenet.catexplorer.rig.RadioModel.FT857)
+                            next = next.copy(volume = null, rfGain = null, micGain = null, powerSetting = null)
                         ensureActive()   // a poll that was in flight when Disconnect was pressed must not bring the screen back
                         _state.value = next
                         _history.value = (_history.value + HistorySample(next.smeter, next.powerMeter, next.swrMeter, next.ptt)).takeLast(HISTORY_LEN)
@@ -331,11 +335,33 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun disconnect() {
+        _ft857.value = Ft857Settings()
         stopCarrier()
         stopWaterfall()
         pollJob?.cancel(); pollJob = null; client = null; pollPaused = false
         _history.value = emptyList()
         _state.value = RigState()
+    }
+
+    // ---- FT-857D controls the radio can't report back: the app shows what it last sent ----
+
+    data class Ft857Settings(
+        val lock: Boolean = false,
+        val clarOn: Boolean = false,
+        val clarHz: Int = 0,
+        val shift: net.kanenet.catexplorer.rig.Ft857Cat.Shift = net.kanenet.catexplorer.rig.Ft857Cat.Shift.SIMPLEX,
+        val offsetHz: Long = 600_000,
+        val toneMode: net.kanenet.catexplorer.rig.Ft857Cat.ToneMode = net.kanenet.catexplorer.rig.Ft857Cat.ToneMode.OFF,
+        val ctcss: Double = 88.5,
+        val dcs: Int = 23,
+    )
+    private val _ft857 = MutableStateFlow(Ft857Settings())
+    val ft857 = _ft857.asStateFlow()
+
+    /** Records the new FT-857D setting and sends it. */
+    fun setFt857(update: Ft857Settings.() -> Ft857Settings, command: RigClient.() -> Unit) {
+        _ft857.value = _ft857.value.update()
+        send(command)
     }
 
     /** Runs a command on the IO thread; the next poll picks up the new radio state. */

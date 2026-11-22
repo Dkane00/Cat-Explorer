@@ -29,9 +29,13 @@ interface WaterfallPicture {
 enum class Sense(val sign: Int) { UPPER(1), LOWER(-1), NONE(0) }
 
 object TuneMath {
+    /**
+     * FT-891 names (CW-U, CW-L, DATA-U, DATA-L) and FT-857D names (CW on the upper side, CW-R / CWR on the lower). The
+     * FT-857D's DIG mode follows a menu setting the app can't read (RTTY is lower sideband, PSK31 upper), so it has no mapping.
+     */
     fun sense(mode: String): Sense = when (mode) {
-        "USB", "DATA-U", "CW-U" -> Sense.UPPER
-        "LSB", "DATA-L", "CW-L" -> Sense.LOWER
+        "USB", "DATA-U", "CW-U", "CW" -> Sense.UPPER
+        "LSB", "DATA-L", "CW-L", "CW-R", "CWR" -> Sense.LOWER
         else -> Sense.NONE
     }
 

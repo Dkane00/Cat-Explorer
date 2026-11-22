@@ -34,6 +34,8 @@ data class RigState(
     val modes: List<String> = emptyList(),
     val bandwidths: List<String> = emptyList(),
 ) {
+    /** Which radio this is (FT-891, FT-857D or another), from its name. */
+    val model: RadioModel get() = RadioModel.of(xcvr)
     /** Connected straight to the radio over USB rather than through FLRig. */
     val directUsb: Boolean get() = flrigVersion.startsWith("USB")
     val activeHz: Long get() = if (activeVfo == "B") vfoBHz else vfoAHz

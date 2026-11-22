@@ -39,4 +39,13 @@ class WaterfallTest {
         val peak = out.indices.maxBy { out[it] }
         assertEquals(1500.0, peak * rate.toDouble() / n, 6.0)
     }
+
+    @Test fun ft857ModeNamesTune() {
+        assertEquals(net.kanenet.catexplorer.audio.Sense.UPPER, TuneMath.sense("CW"))
+        assertEquals(net.kanenet.catexplorer.audio.Sense.LOWER, TuneMath.sense("CW-R"))
+        assertEquals(net.kanenet.catexplorer.audio.Sense.NONE, TuneMath.sense("DIG"))
+        // CW: a tone at the 700 Hz pitch is on the dial; a tone 300 Hz higher is a signal 300 Hz up (300 Hz down in CW-R)
+        assertEquals(7_030_300L, TuneMath.retune(1000.0, 7_030_000, "CW", 700))
+        assertEquals(7_029_700L, TuneMath.retune(1000.0, 7_030_000, "CW-R", 700))
+    }
 }

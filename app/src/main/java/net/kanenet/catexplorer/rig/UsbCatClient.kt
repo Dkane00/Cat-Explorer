@@ -134,11 +134,14 @@ class UsbCatClient(private val port: UsbSerialPort) : RigClient, Closeable {
     }
 
     /** Sets the line state the radio's CAT port expects, then asks which radio this is. Null = no answer. */
-    fun probe(): String? {
+    fun probe(tries: Int = 3): String? {
         // a "?;" means the radio is listening but choked on a leftover fragment of an earlier command — ask again
-        repeat(3) { query("ID;")?.takeIf { it.startsWith("ID") }?.let { return it } }
+        repeat(tries) { query("ID;")?.takeIf { it.startsWith("ID") }?.let { return it } }
         return null
     }
+
+    /** Closes the port without sending anything: for a probe that found no FT-891 (another radio may be listening). */
+    fun abandon() { runCatching { port.close() } }
 
     fun setLines(rts: Boolean, dtr: Boolean) {
         runCatching { port.setRTS(rts) }

@@ -3,8 +3,8 @@
 package net.kanenet.catexplorer.rig
 
 /**
- * What the app needs from a radio connection. Two implementations: [FlrigClient] (through FLRig on a PC) and
- * [UsbCatClient] (straight to the radio's USB serial port). All calls block — run them off the main thread.
+ * What the app needs from a radio connection: [FlrigClient] (through FLRig on a PC), [UsbCatClient] (straight to an FT-891's
+ * USB serial port) and [Ft857Client] (straight to an FT-857D's CAT port). All calls block — run them off the main thread.
  */
 interface RigClient {
     fun readStatic(): StaticInfo
@@ -65,6 +65,17 @@ interface RigClient {
      */
     fun writeMemory(m: MemChannel): MemChannel? =
         YaesuDsp.parseMemChannel(catString(YaesuDsp.memWrite(m) + "MT%03d;".format(m.ch)), m.ch)
+
+    // ---- FT-857D-style set-only controls (the FT-891 and FLRig do these other ways, or not at all) ----
+
+    fun setLock(on: Boolean): Unit = throw UnsupportedOperationException("Lock isn't available on this connection")
+    fun setClarifier(on: Boolean): Unit = throw UnsupportedOperationException("The clarifier isn't available on this connection")
+    fun setClarifierOffset(hz: Int): Unit = throw UnsupportedOperationException("The clarifier isn't available on this connection")
+    fun setRepeaterShift(shift: Ft857Cat.Shift): Unit = throw UnsupportedOperationException("Repeater shift isn't available on this connection")
+    fun setRepeaterOffset(hz: Long): Unit = throw UnsupportedOperationException("Repeater offset isn't available on this connection")
+    fun setToneMode(mode: Ft857Cat.ToneMode): Unit = throw UnsupportedOperationException("Tone squelch isn't available on this connection")
+    fun setCtcss(hz: Double): Unit = throw UnsupportedOperationException("CTCSS tones aren't available on this connection")
+    fun setDcs(code: Int): Unit = throw UnsupportedOperationException("DCS codes aren't available on this connection")
 
     fun readCw(old: CwState): CwState = YaesuDsp.parseCw(catReads(YaesuDsp.CW_READS), old)
     fun readFm(old: FmState): FmState = YaesuDsp.parseFm(catReads(YaesuDsp.FM_READS), old)

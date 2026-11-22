@@ -12,6 +12,9 @@ class FlrigClient(host: String, port: Int) : RigClient {
     // ---- reads -------------------------------------------------------------------------
 
     /** One-time (and occasional) info that doesn't change while you operate. */
+    /** The radio FLRig is set up for, as of the last [readStatic]. */
+    @Volatile private var xcvr = ""
+
     override fun readStatic(): RigClient.StaticInfo {
         val r = rpc.multicall(
             listOf(
@@ -27,8 +30,9 @@ class FlrigClient(host: String, port: Int) : RigClient {
             val inner = (first.firstOrNull() as? List<*>) ?: first
             inner.drop(if (inner.firstOrNull()?.toString()?.toIntOrNull() == null) 1 else 0).map { it.toString() }
         } ?: emptyList()
+        xcvr = r[0]?.toString().orEmpty()
         return RigClient.StaticInfo(
-            xcvr = r[0]?.toString().orEmpty(),
+            xcvr = xcvr,
             version = r[1]?.toString().orEmpty(),
             modes = (r[2] as? List<*>)?.map { it.toString() } ?: emptyList(),
             bandwidths = bws,
@@ -106,8 +110,8 @@ class FlrigClient(host: String, port: Int) : RigClient {
     override fun setBandwidth(bw: Int) { rpc.call("rig.set_bandwidth", bw) }
     override fun setActiveVfo(ab: String) { rpc.call("rig.set_AB", ab) }
     override fun setSplit(on: Boolean) { rpc.call("rig.set_split", if (on) 1 else 0) }
-    // FLRig's rig.swap does nothing on the FT-891, so use the radio's own SWAP VFO command (SV;)
-    override fun swapVfo() { cat(YaesuDsp.swapVfo()) }
+    // FLRig's rig.swap does nothing on the FT-891, so use the radio's own SWAP VFO command (SV;); other radios use FLRig's
+    override fun swapVfo() { if (RadioModel.of(xcvr) == RadioModel.FT891) cat(YaesuDsp.swapVfo()) else rpc.call("rig.swap") }
     override fun vfoAtoB() { rpc.call("rig.vfoA2B") }
     override fun setPtt(on: Boolean) { rpc.call("rig.set_ptt", if (on) 1 else 0) }
     override fun tune() { rpc.call("rig.tune") }

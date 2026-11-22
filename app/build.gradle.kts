@@ -13,8 +13,8 @@ android {
         applicationId = "net.kanenet.catexplorer"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.3.0"
         // the RTL-SDR driver (src/main/cpp) is native code: build it for real tablets and phones, and the x86_64 emulator
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
     }
@@ -36,6 +36,8 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
+    // Android calls such as Log.d do nothing in unit tests instead of failing them
+    testOptions { unitTests.isReturnDefaultValues = true }
     // the licence and the third-party notices travel inside the app, shown under Settings → About
     sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/legal-assets"))
 }

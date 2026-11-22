@@ -118,9 +118,10 @@ doc.addPageTemplates([PageTemplate(id='first', frames=[frame]), PageTemplate(id=
 s = []
 # ---------------------------------------------------------------- cover
 s += [Spacer(1, 1.2 * inch), P('Cat Explorer', title), Spacer(1, 6), P('User Guide', subtitle), Spacer(1, 4),
-      P('A touchscreen controller for the Yaesu FT-891', subtitle), Spacer(1, 2), P('Version 1.2.0', subtitle), Spacer(1, 0.4 * inch), img('02-main', W), Spacer(1, 0.4 * inch)]
-s += box('Cat Explorer is built for the <b>Yaesu FT-891</b> only. Its controls, meter scales, filter widths and memory '
-         'channels are all written for that radio, so it will not work properly with any other model.')
+      P('A touchscreen controller for the Yaesu FT-891 and FT-857D', subtitle), Spacer(1, 2), P('Version 1.3.0', subtitle), Spacer(1, 0.4 * inch), img('02-main', W), Spacer(1, 0.4 * inch)]
+s += box('Cat Explorer is built for the <b>Yaesu FT-891</b>, and also works with the <b>FT-857D</b> (and the FT-897D, which '
+         'shares its CAT language). The FT-857D allows far fewer controls over CAT, and its support has not yet been tested on a real '
+         'radio: see section 17. Most of this guide describes the FT-891.')
 s += [NextPageTemplate('rest'), PageBreak()]
 
 toc = TableOfContents()
@@ -152,9 +153,10 @@ s += [P('1. Welcome', h1),
 s += [*sec('2. Connecting to the radio', 4.6),
       shot('01-connect', 'The connect screen. The top half is for FLRig, the bottom half for a direct USB connection.'),
       *H2('Connect over USB')] + B([
-          'On the radio, open the menu and set <b>05-06 CAT RATE</b> to the speed you want to use (for example 9600). Remember the value.',
+          'On the radio, open the menu and set <b>05-06 CAT RATE</b> to the speed you want to use (for example 9600). Remember the value. '
+          '(An FT-857D: its CAT RATE menu item; see section 17.)',
           'Switch the radio on and plug its USB port into the tablet with the OTG cable.',
-          'In Cat Explorer, type the same speed into the <b>Baud rate</b> box.',
+          'In Cat Explorer, type the same speed into the <b>Baud rate</b> box. If it is wrong, the app tries the other CAT rates by itself.',
           'Tap <b>Connect over USB</b>. The first time, Android asks whether Cat Explorer may use the USB device. Tap <b>OK</b>.',
           'The main screen appears and the status card at the bottom shows a green dot, <b>RX FT-891</b> and <b>USB CAT</b>.']) + [
       Spacer(1, 4)] + box('The baud rate in the app must match the radio\'s CAT RATE. If the radio does not answer, check the two '
@@ -479,7 +481,7 @@ s += [*sec('14. Settings', 4.6),
       Table([[[P('<b>Panadapter port</b> is the network port of Cat Explorer Panadapter on the PC (7366 unless you changed it there). '
                  'Type a new number and tap <b>Save</b>.'),
                P('<b>Colours</b> picks the waterfall\'s colour theme. Tap it for a list with a preview strip of each one, quiet on the left '
-                 'and loud on the right. <b>Cat Explorer</b> is the app\'s own; the other 28 are the palettes that come with JS8Call (credits in section 17). '
+                 'and loud on the right. <b>Cat Explorer</b> is the app\'s own; the other 28 are the palettes that come with JS8Call (credits in section 18). '
                  'Changing it recolours the whole waterfall at once.'),
                P('<b>Band edges (US)</b> turns the band-edge lines and dimming on or off (section 15).'),
                P('<b>License bars</b> chooses the bars under the waterfall: <b>Off</b>, one class (<b>Technician</b>, <b>General</b>, '
@@ -637,8 +639,48 @@ s += [*sec('16. USB and FLRig: what is available'),
           ['Disconnect', 'Tap Disconnect on the status card.'],
       ], [2.8 * inch, 4.2 * inch])
 
-# ---------------------------------------------------------------- 17 licence
-s += [*sec('17. Licence and credits', 7.5),
+# ---------------------------------------------------------------- 17 FT-857D
+s += [*sec('17. Using an FT-857D', 4.6),
+      P('Cat Explorer recognises an FT-857D by itself: through FLRig from the radio name FLRig reports, and over USB by the way the '
+        'radio answers. The FT-897D shares its CAT language and should behave the same. <b>This support was written from Yaesu\'s '
+        'FT-857D manual and tested against a simulated radio, not a real one</b>; reports are welcome.')] + box(
+          'The FT-857D\'s CAT language is much smaller than the FT-891\'s: the radio can report only its frequency, mode, S-meter, PO '
+          'meter, transmit/receive, split, a high-SWR warning and which VFO is in use. Everything else can only be set, or not reached '
+          'over CAT at all.') + [
+      *H2('Connecting'),
+      ] + B([
+          '<b>Directly:</b> a USB CAT cable (such as a CT-62-style USB lead) from the radio\'s CAT jack to the tablet\'s USB port, '
+          'through an OTG adapter or hub. Set the radio\'s <b>CAT RATE</b> menu item (4800, 9600 or 38400), type it into <b>Baud rate</b> and '
+          'tap <b>Connect over USB</b>. The app finds the radio even if the rate is different, by trying each one.',
+          '<b>Through FLRig:</b> set FLRig up for the FT-857D and connect as usual (section 2). The app then offers FLRig\'s general '
+          'controls: frequency, mode, transmit, meters, split and A/B.']) + [
+      shot('37-ft857-main', 'An FT-857D over USB (shown with a simulated radio). Controls the radio can\'t offer are hidden.'),
+      *H2('What you can do'),
+      ] + table([
+          ['Control', 'FT-857D over USB'],
+          ['Frequency (typed, Band button, waterfall taps)', 'Yes'],
+          ['Mode: LSB, USB, CW, CW-R, AM, FM, FM-N, WFM, DIG, PKT', 'Yes'],
+          ['VFO A/B, Split', 'Yes. The VFO not in use shows once the app has seen it'],
+          ['Lock', 'Set only (shows what the app last sent)'],
+          ['CLAR: clarifier on/off and offset up to ±9.99 kHz', 'Set only'],
+          ['RPT: repeater shift and offset, tone mode (Off, Tone, TSQ, DCS), CTCSS tone, DCS code', 'Set only'],
+          ['S meter, power meter', 'Yes (the radio reports 16 steps)'],
+          ['SWR', 'OK or HIGH while transmitting'],
+          ['Waterfall', 'Yes: an SDR on the tablet, or through FLRig'],
+          ['Volume, RF gain, mic gain, power, filter width, DSP, memories, tuner, CW keying, A→B', 'Not possible over CAT: hidden'],
+      ], [4.4 * inch, 2.6 * inch]) + [
+      shot('38-ft857-rpt', 'The RPT panel: repeater shift and offset, tone mode, CTCSS tone and DCS code.'),
+      P('<b>CLAR</b> and <b>RPT</b> open beside the buttons. Because the radio can\'t report these settings back, each panel shows '
+        'what the app last sent; it starts from the usual defaults (off, simplex, 600 kHz, 88.5 Hz, DCS 023) when you connect. '
+        'Shift and tones apply in FM.'),
+      P('There is no <b>Tune</b> button with an FT-857D: it has no tuner command, and its power can\'t be lowered over CAT for a '
+        'tuning carrier. The app also never uses the radio\'s undocumented memory-write commands, because a wrong guess there could '
+        'overwrite its calibration.', small),
+      P('The <b>CAT console</b> speaks the FT-857D\'s five-byte commands in hex: type, for example, '
+        '<font face="Mono">00 00 00 00 03</font> (read frequency and mode) and the reply comes back in hex.', small)]
+
+# ---------------------------------------------------------------- 18 licence
+s += [*sec('18. Licence and credits', 7.5),
       P('Cat Explorer, the PC Panadapter and this guide are Copyright (C) 2026 David Kane (W6MZT). They are free software: you may '
         'share and change them under the terms of the <b>GNU General Public License, version 3 or (at your option) any later '
         'version</b>. They come with <b>no warranty</b>. The full licence, and the source code, are at '

@@ -49,8 +49,9 @@ fun ConnectScreen(vm: RigViewModel, onSettings: () -> Unit) {
         Text("Or plug the radio into this tablet", color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
-            baud, { baud = it.filter(Char::isDigit) }, label = { Text("Baud rate (radio menu 05-06 CAT RATE)") },
+            baud, { baud = it.filter(Char::isDigit) }, label = { Text("Baud rate (the radio's CAT RATE: FT-891 menu 05-06; FT-857D menu CAT RATE)") },
             singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            supportingText = { Text("FT-891 or FT-857D: the app works out which radio it is, and tries the other CAT rates if this one gets no answer.") },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))

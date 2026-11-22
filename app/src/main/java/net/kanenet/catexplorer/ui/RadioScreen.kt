@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.kanenet.catexplorer.RigViewModel
 import net.kanenet.catexplorer.rig.FlrigClient
+import net.kanenet.catexplorer.rig.RadioModel
 import net.kanenet.catexplorer.rig.RigState
 import net.kanenet.catexplorer.rig.YaesuDsp
 import java.util.Locale
@@ -222,6 +223,9 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
     var leftHeightPx by remember { mutableIntStateOf(0) }
     val density = androidx.compose.ui.platform.LocalDensity.current
     val portrait = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp < 840
+    // an FT-857D straight over USB: its own set-only controls (through FLRig only FLRig's general ones are available)
+    val ft857Direct = s.model == RadioModel.FT857 && s.directUsb
+    val ft by vm.ft857.collectAsState()
 
     @Composable fun Pickers() {
       val body: @Composable () -> Unit = {
@@ -278,24 +282,28 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("VFO ${if (activeB) "A" else "B"}", fontSize = 12.sp, color = th[ThemeColor.LABEL])
             Text(
-                    formatHz(s.idleHz), fontSize = 22.sp, fontFamily = FontFamily.Monospace, color = th[ThemeColor.LABEL],
+                    // the FT-857D can only report the VFO in use; the other one shows once the app has seen it
+                    if (s.idleHz > 0) formatHz(s.idleHz) else "—", fontSize = 22.sp, fontFamily = FontFamily.Monospace, color = th[ThemeColor.LABEL],
                     modifier = Modifier.clickable { text = (s.idleHz / 1000.0).toString(); editingIdle = true; editing = true },
                 )
             if (s.split) Text("SPLIT", color = th[ThemeColor.WARN], fontSize = 14.sp)
         }
         Spacer(Modifier.height(8.dp))
         FlowRowCompat {
-            FilterChip(!activeB, { vm.send { setActiveVfo("A") } }, { Text("A") }, enabled = !s.directUsb, colors = selectedBlue())
-            FilterChip(activeB, { if (memMode) leaveMemory() else vm.send { setActiveVfo("B") } }, { Text("B") }, enabled = !s.directUsb, colors = selectedBlue())
+            FilterChip(!activeB, { vm.send { setActiveVfo("A") } }, { Text("A") }, enabled = !s.directUsb || ft857Direct, colors = selectedBlue())
+            FilterChip(activeB, { if (memMode) leaveMemory() else vm.send { setActiveVfo("B") } }, { Text("B") }, enabled = !s.directUsb || ft857Direct, colors = selectedBlue())
             if (FlrigClient.supportsYaesuDsp(s.xcvr)) {
                 // the radio's [V/M] key; FLRig has no call for it, so it goes out as a CAT command
                 FilterChip(d.memoryMode, { vm.setDsp(YaesuDsp.vfoMemory()) { copy(memoryMode = !memoryMode) } }, { Text(if (d.memoryMode) "MEM" else "VFO") }, colors = selectedBlue())
             }
             OutlinedButton({ if (memMode) leaveMemory() else vm.send { swapVfo() } }) { Text("A/B") }
-            OutlinedButton({ vm.send { vfoAtoB() } }, enabled = !memMode) { Text("A→B") }
+            if (!ft857Direct) OutlinedButton({ vm.send { vfoAtoB() } }, enabled = !memMode) { Text("A→B") }
             FilterChip(s.split, { vm.send { setSplit(!s.split) } }, { Text("Split") }, colors = selectedBlue())
             if (FlrigClient.supportsYaesuDsp(s.xcvr)) {
                 FilterChip(d.lockOn, { vm.setDsp(YaesuDsp.lock(!d.lockOn)) { copy(lockOn = !lockOn) } }, { Text("Lock") }, colors = selectedBlue())
+            }
+            if (ft857Direct) {
+                FilterChip(ft.lock, { vm.setFt857({ copy(lock = !lock) }) { setLock(!ft.lock) } }, { Text("Lock") }, colors = selectedBlue())
             }
         }
         run {
@@ -304,7 +312,9 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
                 val left by vm.carrierLeft.collectAsState()
                 val tuneModifier = Modifier.height(32.dp)
                 val tunePadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-                if (carrierMode) {
+                // the FT-857D has no tuner command and its power can't be set over CAT, so neither kind of Tune is safe to offer
+                if (s.model == RadioModel.FT857) Unit
+                else if (carrierMode) {
                     // external tuner: a low-power carrier you start and stop, cut off after a minute
                     if (left > 0) Button({ vm.stopCarrier() }, colors = ButtonDefaults.buttonColors(containerColor = th[ThemeColor.DANGER]), contentPadding = tunePadding, modifier = tuneModifier) { Text("Tune ${left}s") }
                     else OutlinedButton({ vm.toggleCarrier() }, contentPadding = tunePadding, modifier = tuneModifier) { Text("Tune") }
@@ -317,7 +327,12 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
                 // PA0: off = IPO (preamp bypassed), on = AMP; RA0 = 12 dB attenuator
                 FilterChip(d.preampOn, { vm.setDsp(YaesuDsp.preamp(!d.preampOn)) { copy(preampOn = !d.preampOn) } }, { Text(if (d.preampOn) "AMP" else "IPO") }, colors = selectedBlue())
                 FilterChip(d.attOn, { vm.setDsp(YaesuDsp.att(!d.attOn)) { copy(attOn = !d.attOn) } }, { Text("ATT") }, colors = selectedBlue())
-                Feature.values().forEach { f ->
+                listOf(Feature.CW, Feature.FM, Feature.VOICE).forEach { f ->
+                    FilterChip(feature == f, { feature = if (feature == f) null else f }, { Text(f.label) }, colors = selectedBlue())
+                }
+            }
+            if (ft857Direct) {
+                listOf(Feature.CLAR, Feature.RPT).forEach { f ->
                     FilterChip(feature == f, { feature = if (feature == f) null else f }, { Text(f.label) }, colors = selectedBlue())
                 }
             }
@@ -331,7 +346,9 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
                     Feature.CW -> CwSettingsPanel(vm, panelHeight)
                     Feature.FM -> FmSettingsPanel(vm, panelHeight)
                     Feature.VOICE -> VoicePanel(vm, panelHeight)
-                    else -> ComingSoonPanel(f, panelHeight)
+                    // the FT-857D's button area is short, so its panels get room of their own
+                    Feature.CLAR -> ClarifierPanel(vm, panelHeight.coerceAtLeast(150.dp))
+                    Feature.RPT -> RepeaterPanel(vm, panelHeight.coerceAtLeast(150.dp))
                 }
             }
         }
@@ -358,7 +375,8 @@ private fun FrequencyPanel(s: RigState, vm: RigViewModel) {
                     Feature.CW -> CwSettingsPanel(vm, 130.dp)
                     Feature.FM -> FmSettingsPanel(vm, 130.dp)
                     Feature.VOICE -> VoicePanel(vm, 130.dp)
-                    else -> ComingSoonPanel(f, 130.dp)
+                    Feature.CLAR -> ClarifierPanel(vm, 150.dp)
+                    Feature.RPT -> RepeaterPanel(vm, 150.dp)
                 }
             }
         }
@@ -484,6 +502,12 @@ private fun ControlsPanel(s: RigState, vm: RigViewModel) {
         val minW = if (FlrigClient.supportsYaesuDsp(s.xcvr)) 5 else 0
         var typingPwr by remember { mutableStateOf(false) }
         var pwrText by remember { mutableStateOf("") }
+        if (s.volume == null && s.rfGain == null && s.micGain == null && s.powerSetting == null && s.connected) {
+            Text(
+                "The ${s.xcvr.ifEmpty { "radio" }} doesn't allow volume, RF gain, mic gain or power to be set over CAT: use the radio's own knobs and menus.",
+                fontSize = 13.sp, color = LocalThemeSettings.current[ThemeColor.LABEL],
+            )
+        }
         s.powerSetting?.let {
             SliderRow("PWR W", it.coerceAtLeast(minW), minW..s.maxPower, onValueClick = { pwrText = it.toString(); typingPwr = true }) { v -> vm.send { setPower(v) } }
         }
