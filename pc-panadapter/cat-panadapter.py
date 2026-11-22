@@ -63,8 +63,8 @@ def start_server(device, port, gain="auto", ppm=0, test_mhz=None):
     os.makedirs(os.path.dirname(LOG), exist_ok=True)
     log = open(LOG, "w")
     args = [sys.executable, SERVER, "--port", str(port)]
-    if device == server.SDR_ID:
-        args += ["--sdr", "--gain", str(gain), "--ppm", str(ppm)]
+    if server.is_sdr(device):
+        args += (["--sdr"] if device == server.SDR_ID else ["--device", device]) + ["--gain", str(gain), "--ppm", str(ppm)]
         if test_mhz:
             args += ["--test-freq", str(test_mhz)]
     else:
@@ -142,7 +142,7 @@ class PanadapterWindow(Gtk.Window):
 
         intro = Gtk.Label(xalign=0, wrap=True, max_width_chars=60)
         intro.set_markup("Feeds the Waterfall tab in <b>Cat Explorer</b> on the tablet: the radio's receive audio from a "
-                         "sound card (with Listen), or a wide view of the band from an RTL-SDR.")
+                         "sound card (with Listen), or a wide view of the band from an SDR.")
         grid.attach(intro, 0, row, 3, 1); row += 1
 
         grid.attach(Gtk.Label(label="Source", xalign=1), 0, row, 1, 1)
@@ -158,13 +158,11 @@ class PanadapterWindow(Gtk.Window):
         self.sdr_rows = []
         lbl = Gtk.Label(label="SDR gain", xalign=1)
         self.gain = Gtk.ComboBoxText()
-        self.gain.append("auto", "Auto")
-        for g in SDR_GAINS:
-            self.gain.append(str(g), f"{g} dB")
-        self.gain.set_active_id(str(self.cfg.get("gain", "auto")))
         self.gain.set_halign(Gtk.Align.START)
-        note = Gtk.Label(label="only used above 24 MHz (6 m, 10 m); lower it if the SDR overloads", xalign=0)
+        self.gain_for = None
+        note = Gtk.Label(xalign=0)
         note.get_style_context().add_class("dim-label")
+        self.gain_note = note
         grid.attach(lbl, 0, row, 1, 1); grid.attach(self.gain, 1, row, 1, 1); grid.attach(note, 2, row, 1, 1)
         self.sdr_rows += [lbl, self.gain, note]; row += 1
 
@@ -245,9 +243,27 @@ class PanadapterWindow(Gtk.Window):
         self.show_sdr_options()
 
     def is_sdr(self):
-        return self.device.get_active_id() == server.SDR_ID
+        return server.is_sdr(self.device.get_active_id())
+
+    def fill_gains(self):
+        """The RTL-SDR's own gain steps, or a general 0-60 dB list for SoapySDR SDRs (the server keeps it in range)."""
+        rtl = self.device.get_active_id() == server.SDR_ID
+        if self.gain_for == rtl:
+            return
+        keep = self.gain.get_active_id() or str(self.cfg.get("gain", "auto"))
+        self.gain_for = rtl
+        self.gain.remove_all()
+        self.gain.append("auto", "Auto")
+        for g in (SDR_GAINS if rtl else [float(x) for x in range(0, 65, 5)]):
+            self.gain.append(str(g), f"{g:g} dB")
+        if not self.gain.set_active_id(keep):
+            self.gain.set_active_id("auto")
+        self.gain_note.set_text("only used above 24 MHz (6 m, 10 m); lower it if the SDR overloads" if rtl else
+                                "the SDR's overall gain, kept within its range; lower it if the SDR overloads")
 
     def show_sdr_options(self):
+        if self.is_sdr():
+            self.fill_gains()
         for w in self.sdr_rows:
             w.set_visible(self.is_sdr())
         self.level_label.set_text("SDR level" if self.is_sdr() else "Audio level")
@@ -260,6 +276,10 @@ class PanadapterWindow(Gtk.Window):
         inputs = server.sound_inputs()
         if server.rtlsdr_present() or want == server.SDR_ID:
             inputs.append((server.SDR_ID, "RTL-SDR — wide panadapter"))
+        others = server.soapy_devices()
+        if want and want.startswith(server.SOAPY_PREFIX) and want not in [d for d, _ in others]:
+            others.append((want, want[len(server.SOAPY_PREFIX):] + " — wide panadapter (SoapySDR)"))   # running, so busy
+        inputs += others
         for name, desc in inputs:
             self.device.append(name, desc)
         if want and want in [n for n, _ in inputs]:
@@ -276,7 +296,7 @@ class PanadapterWindow(Gtk.Window):
         port = int(self.port.get_value())
         gain, ppm = self.gain.get_active_id() or "auto", int(self.ppm.get_value())
         test_mhz = None
-        if device == server.SDR_ID and self.test_on.get_active():
+        if server.is_sdr(device) and self.test_on.get_active():
             try:
                 test_mhz = float(self.test_mhz.get_text().strip().replace(",", "."))
             except ValueError:
@@ -322,7 +342,7 @@ class PanadapterWindow(Gtk.Window):
             if stale:
                 self.state.set_markup("<span foreground='#e0a000'>●</span>  <b>Running, but not answering</b>")
             elif status.get("error"):
-                what = "the RTL-SDR or FLRig" if status.get("device") == server.SDR_ID else "the sound card"
+                what = "the SDR or FLRig" if server.is_sdr(status.get("device")) else "the sound card"
                 self.state.set_markup(f"<span foreground='#e0a000'>●</span>  <b>Running — problem with {what}</b>")
             else:
                 self.state.set_markup("<span foreground='#2ec27e'>●</span>  <b>Running</b>")
@@ -333,7 +353,7 @@ class PanadapterWindow(Gtk.Window):
                 up = int(time.time() - status.get("started", time.time()))
                 lines.append(f"Port {status['port']} on {addrs}   ·   running {up // 3600}h {up // 60 % 60}m   ·   PID {pid}")
                 lines.append("Tablets connected: " + (", ".join(c.split(":")[0] for c in tablets) if tablets else "none yet"))
-                if status.get("device") == server.SDR_ID and status.get("dial"):
+                if server.is_sdr(status.get("device")) and status.get("dial"):
                     lines.append(f"Dial {status['dial'] / 1e6:.4f} MHz   ·   SDR tuned to {status.get('sdr_centre', 0) / 1e6:.4f} MHz"
                                  + ("   ·   paused while transmitting" if status.get("ptt") else ""))
                 if status.get("error"):
@@ -345,7 +365,7 @@ class PanadapterWindow(Gtk.Window):
         self.level.set_value(min(peak, 1.0))
         if not running:
             self.level_note.set_text("")
-        elif status and status.get("device") == server.SDR_ID:
+        elif status and server.is_sdr(status.get("device")):
             if clip > 0.001:
                 self.level_note.set_markup("<span foreground='#e01b24'><b>Overloaded</b> — lower the SDR gain. If this "
                                            "only happens when you transmit, the SDR is too close to your antenna.</span>")

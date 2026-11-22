@@ -21,7 +21,7 @@ A touchscreen controller for the **Yaesu FT-891** HF transceiver, for Android ta
 - **Memory channels**: a table of the radio's programmed channels. Tap a row to go to it, or add and edit channels (frequency, mode, tone, shift, name). The channel list is backed up to the app's files folder before the first write of a session.
 - **Band button**: jumps to a phone calling frequency on each band and sets its usual mode (30 m goes to its digital frequency in DATA-U). The Bands tab lists the digital-mode calling frequencies.
 - **Tune button**: runs the radio's own antenna tuner, or, for an external auto-tuner, sends a short low-power AM carrier and then puts your mode, width and power back.
-- **Waterfall and panadapter**: with FLRig, a waterfall of the radio's receive audio, or with an RTL-SDR on the PC a true wide panadapter of up to 200 kHz, fed by the small **Cat Explorer Panadapter** program on the FLRig PC. Over USB, plug an RTL-SDR into the tablet beside the radio (through a USB hub) and the app runs it itself, no PC needed. Tap a signal to tune to it. US band and sub-band edges are marked, with license bars showing where Technician, General, Advanced or Extra may transmit (red where only a higher class may), and 29 colour themes including JS8Call's palettes. See [Waterfall](#waterfall).
+- **Waterfall and panadapter**: with FLRig, a waterfall of the radio's receive audio, or with an SDR on the PC (RTL-SDR, or SDRplay, Airspy, HackRF and others through SoapySDR) a true wide panadapter of up to 200 kHz, fed by the small **Cat Explorer Panadapter** program on the FLRig PC. Over USB, plug an RTL-SDR, Airspy, Airspy HF+ or HackRF into the tablet beside the radio (through a USB hub) and the app runs it itself, no PC needed. Tap a signal to tune to it. US band and sub-band edges are marked, with license bars showing where Technician, General, Advanced or Extra may transmit (red where only a higher class may), and 29 colour themes including JS8Call's palettes. See [Waterfall](#waterfall).
 - **Raw CAT console** for sending any CAT command and seeing the reply.
 - **Themes**: dark or light, with every colour changeable.
 
@@ -88,13 +88,44 @@ Setup, once:
 
 Below 24 MHz a V3 has no amplifier in front, so it needs a decent wire (5–10 m or more); a small whip shows little but interference there. On 10 m and 6 m it uses its normal tuner and a small antenna does much better.
 
-#### RTL-SDR on the tablet (USB connection, no PC)
+#### Other SDRs on the PC (SDRplay, Airspy, HackRF, LimeSDR, PlutoSDR…)
 
-Connected to the radio over USB, the tablet can run an RTL-SDR itself: plug the radio and the RTL-SDR into a powered USB-C hub on the tablet, connect with **Connect over USB**, and the **Waterfall** tab appears. The first time, Android asks whether Cat Explorer may use the RTL-SDR; tap **OK**. The view is the same wide panadapter as the PC's (up to 200 kHz around the dial, Span, tap-to-tune, band edges), and the app keeps the SDR tuned near the radio's dial, using direct sampling below 24 MHz like the PC. The audio waterfall isn't available this way, because the FT-891's USB port carries no audio.
+Besides the RTL-SDR, the Panadapter can run any SDR that has a [SoapySDR](https://github.com/pothosware/SoapySDR) module, giving the same wide view on the tablet. Install SoapySDR and the common modules:
+
+```bash
+sudo apt install python3-soapysdr python3-numpy soapysdr-module-all
+```
+
+Then plug the SDR in, press **Refresh** in the Panadapter window, choose it from **Source** (it shows as "… — wide panadapter (SoapySDR)") and press **Start**. **SDR gain** is the SDR's overall gain (Auto where the SDR has automatic gain; otherwise a middle setting), and **Correction** and **Test on a fixed frequency** work as for the RTL-SDR. From a terminal: `cat-panadapter-server.py --list`, then `--soapy driver=airspy` (or the `--device soapy:…` the list shows).
+
+**SDRplay** (RSP1A, RSP1B, RSPdx, RSPduo and others) also needs SDRplay's own driver, which is free but closed and not in Ubuntu: download and run the Linux **API** installer from [sdrplay.com](https://www.sdrplay.com/downloads/), then build the SoapySDR module for it:
+
+```bash
+sudo apt install build-essential cmake libsoapysdr-dev
+git clone https://github.com/pothosware/SoapySDRPlay3 ~/.local/src/SoapySDRPlay3
+cd ~/.local/src/SoapySDRPlay3 && mkdir -p build && cd build && cmake .. && make && sudo make install && sudo ldconfig
+```
+
+`SoapySDRUtil --find` should then list the SDRplay. Each SDR's frequency range is its own: an Airspy R2 or Mini starts at 24 MHz (10 m and up, no HF without an upconverter), an Airspy HF+ covers 0–31 MHz and 60–260 MHz, and the window says when the dial is outside the SDR's range. These SDRs are supported from their published drivers but **haven't been tried with Cat Explorer on real hardware**; reports are welcome.
+
+#### SDR on the tablet (USB connection, no PC)
+
+Connected to the radio over USB, the tablet can run an SDR itself: plug the radio and the SDR into a powered USB-C hub on the tablet, connect with **Connect over USB**, and the **Waterfall** tab appears. The first time, Android asks whether Cat Explorer may use the SDR; tap **OK**. The view is the same wide panadapter as the PC's (up to 200 kHz around the dial, Span, tap-to-tune, band edges), and the app keeps the SDR tuned near the radio's dial, using direct sampling below 24 MHz like the PC. The audio waterfall isn't available this way, because the FT-891's USB port carries no audio.
 
 The same antenna rules apply: the SDR needs its own receive antenna or a T/R switch, never the radio's antenna socket. The **Gain** button on the waterfall bar (also in **Settings → Waterfall → SDR gain**) opens **Auto** or **Manual**, with a slider through the gain steps your dongle reports. On an RTL-SDR Blog V3, gain only applies above 24 MHz (10 m, 6 m), because below that it samples HF directly; the setting says so while that's the case. SDRs with an HF front end use it on every band. Lower it if the waterfall says the SDR is overloaded. A USB hub with an Ethernet adapter or a charger can add steady carriers to the picture; if you see evenly spaced lines that move when the SDR retunes, try another hub or unplug its extras. Tested with an RTL-SDR Blog V3 and an FT-891 on a Galaxy Tab S6 Lite (Android 16).
 
-The driver is RTL-SDR Blog's `librtlsdr` with `libusb`, built into the app from `app/src/main/cpp` (see [License](#license)); building the app needs the Android NDK and CMake (`sdkmanager "ndk;27.3.13750724" "cmake;3.22.1"`).
+SDRs the tablet can run, with their drivers built into the app:
+
+| SDR | Covers | Gain | Tested |
+|---|---|---|---|
+| RTL-SDR (Blog V3/V4 and other RTL2832U dongles) | 500 kHz–1.766 GHz (HF by direct sampling on a V3) | the tuner's dB steps | yes |
+| Airspy R2 / Mini | 24 MHz–1.8 GHz (10 m and up) | Auto (its AGC) or levels 0–21 | no |
+| Airspy HF+ / HF+ Discovery | 0–31 MHz and 60–260 MHz | Auto (its AGC) or 0–48 dB | no |
+| HackRF One | 1 MHz–6 GHz | total LNA+VGA 0–100 dB; Auto is a middle setting | no |
+
+**SDRplay can't be run by the tablet**: its driver is closed and SDRplay doesn't offer it for Android apps. Plug an SDRplay into the FLRig PC and use the Panadapter there instead; if one is plugged into the tablet, the Waterfall tab says so.
+
+The drivers (RTL-SDR Blog's `librtlsdr`, `libairspy`, `libairspyhf`, `libhackrf`, with `libusb`) are built into the app from `app/src/main/cpp` (see [License](#license)); building the app needs the Android NDK and CMake (`sdkmanager "ndk;27.3.13750724" "cmake;3.22.1"`).
 
 #### Band edges and colours
 
@@ -143,9 +174,11 @@ The user guide PDF is built from `docs/guide/make-guide.py` and the screenshots 
 
 Cat Explorer's own code is open source under the [MIT License](LICENSE). Copyright (c) 2026 David Kane (W6MZT).
 
-The app also includes two libraries by other people, in `app/src/main/cpp`, each with its own license file there:
+The app also includes libraries by other people, in `app/src/main/cpp`, each with its own license file there:
 
 - **librtlsdr** from [RTL-SDR Blog](https://github.com/rtlsdrblog/rtl-sdr-blog) (GPL version 2 or later), with one small addition for Android marked in the source: `rtlsdr_open_fd()`.
 - **libusb** 1.0.27 from [libusb.info](https://github.com/libusb/libusb) (LGPL version 2.1 or later), unchanged.
+- **libairspy** and **libairspyhf** from [Airspy](https://github.com/airspy) (BSD), unchanged.
+- **libhackrf** from [Great Scott Gadgets](https://github.com/greatscottgadgets/hackrf) (BSD), with one small addition for Android marked in the source: `hackrf_open_fd()`.
 
 Because the GPL driver is built into the APK, the APK as a whole is distributed under the terms of the GNU GPL version 2 or later, with complete source in this repository. Cat Explorer's own files stay MIT-licensed and can be reused under MIT on their own.

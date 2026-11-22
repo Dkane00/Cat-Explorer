@@ -8,6 +8,10 @@ Runs on the PC that runs FLRig and feeds the Waterfall tab in Cat Explorer on th
   jack and streams it, raw, to the tablet. The tablet draws a 0-4 kHz waterfall of the receive passband and
   can also play the audio ("Listen"). Needs only the Python standard library plus `parec` or `arecord`.
 
+* Another SDR through SoapySDR (--soapy driver=NAME, or --device soapy:driver=NAME from --list): the same wide
+  panadapter from an SDRplay, Airspy, Airspy HF+, HackRF, LimeSDR, PlutoSDR or anything else with a SoapySDR module.
+  Needs python3-soapysdr and the SDR's module (soapysdr-module-all; SDRplay: SDRplay's API plus SoapySDRPlay3).
+
 * An RTL-SDR (--sdr): a wide panadapter. It runs RTL-SDR Blog's `rtl_tcp`, keeps the SDR tuned near the
   radio's frequency (read from FLRig on this PC), does the FFT here and sends the tablet about +/-100 kHz of
   spectrum around the dial ~20 times a second. Needs numpy (python3-numpy). The SDR must have its own receive
@@ -193,6 +197,25 @@ class SoundSource:
             time.sleep(3)
 
 
+def spectrum_frame(spec, bin_hz, sdr_centre, dial, overloaded, floor=1e-6):
+    """One compressed CATSPEC 2 frame: +/-SDR_HALF_SPAN Hz around the dial from a power spectrum [spec] (numpy, lowest
+    frequency first, sdr_centre in the middle, bins of bin_hz). None if that span isn't all inside the spectrum."""
+    import numpy as np
+    n = len(spec)
+    half_bins = int(SDR_HALF_SPAN / bin_hz)
+    centre_bin = n // 2 + int(round((dial - sdr_centre) / bin_hz))
+    lo, hi = centre_bin - half_bins, centre_bin + half_bins
+    if lo < 0 or hi > n:
+        return None
+    db = 10 * np.log10(spec[lo:hi] + floor)
+    base = float(np.floor(db.min()))
+    q = np.clip(np.round((db - base) / SDR_STEP_DB), 0, 127).astype(np.int16)   # 0..127 keeps every difference in one byte
+    # neighbouring bins are similar, so their differences compress well
+    packed = zlib.compress(np.diff(q, prepend=0).astype(np.int8).tobytes(), 6)
+    return b"Z" + struct.pack(">qfffHBH", dial, bin_hz, base, SDR_STEP_DB, q.size, 1 if overloaded else 0,
+                              len(packed)) + packed
+
+
 class SdrSource:
     """A wide panadapter from an RTL-SDR, kept tuned near the radio's dial."""
     header = "CATSPEC 2\n"
@@ -260,7 +283,6 @@ class SdrSource:
             threading.Thread(target=self.follow_flrig, args=(pan,), daemon=True).start()
         window = np.hanning(SDR_FFT).astype(np.float32)
         bin_hz = SDR_RATE / SDR_FFT
-        half_bins = int(SDR_HALF_SPAN / bin_hz)
         block = SDR_FFT * 2   # bytes per FFT (I and Q, one byte each)
         while not pan.stopping:
             if not self.dial:
@@ -320,18 +342,10 @@ class SdrSource:
                         if n_acc >= SDR_FFTS_PER_FRAME:
                             spec = np.fft.fftshift(acc / n_acc)
                             acc[:] = 0; n_acc = 0
-                            centre_bin = SDR_FFT // 2 + int(round((self.dial - self.sdr_centre) / bin_hz))
-                            lo, hi = centre_bin - half_bins, centre_bin + half_bins
-                            if lo < 0 or hi > SDR_FFT:
+                            frame = spectrum_frame(spec, bin_hz, self.sdr_centre, self.dial,
+                                                   bool(counted and over / counted > 0.001))
+                            if frame is None:
                                 continue
-                            db = 10 * np.log10(spec[lo:hi] + 1e-6)
-                            base = float(np.floor(db.min()))
-                            q = np.clip(np.round((db - base) / SDR_STEP_DB), 0, 127).astype(np.int16)   # 0..127 keeps every difference in one byte
-                            # neighbouring bins are similar, so their differences compress well
-                            packed = zlib.compress(np.diff(q, prepend=0).astype(np.int8).tobytes(), 6)
-                            flags = 1 if (counted and over / counted > 0.001) else 0
-                            frame = b"Z" + struct.pack(">qfffHBH", self.dial, bin_hz, base, SDR_STEP_DB, q.size, flags,
-                                                       len(packed)) + packed
                             pan.broadcast(frame)
                             if counted >= SDR_RATE:
                                 pan.peak, pan.clip = peak / 128, over / counted
@@ -349,6 +363,201 @@ class SdrSource:
 
     def tune(self, sock, hz):
         sock.sendall(struct.pack(">BI", 0x01, int(hz)))
+
+
+# ---------------------------------------------------------------- other SDRs, through SoapySDR
+
+SOAPY_PREFIX = "soapy:"
+# Drivers not offered through SoapySDR: the RTL-SDR has its own source above (with RTL-SDR Blog's HF direct sampling),
+# and these aren't radios.
+SOAPY_SKIP = {"rtlsdr", "audio", "remote", "null"}
+SOAPY_NAMES = {"sdrplay": "SDRplay", "airspy": "Airspy", "airspyhf": "Airspy HF+", "hackrf": "HackRF",
+               "lime": "LimeSDR", "plutosdr": "PlutoSDR", "uhd": "USRP", "bladerf": "bladeRF", "sdrplay3": "SDRplay"}
+
+
+def soapy_devices():
+    """[(device id, description)] for every SDR SoapySDR can see, except the RTL-SDR. Empty if SoapySDR isn't installed
+    (sudo apt install python3-soapysdr soapysdr-module-all; SDRplay also needs SDRplay's API and SoapySDRPlay3)."""
+    try:
+        import SoapySDR
+    except ImportError:
+        return []
+    out = []
+    try:
+        found = SoapySDR.Device.enumerate()
+    except Exception:
+        return []
+    for kw in found:
+        d = dict(kw)
+        driver = d.get("driver", "")
+        if driver in SOAPY_SKIP:
+            continue
+        keep = {k: d[k] for k in ("driver", "serial") if k in d}
+        dev_id = SOAPY_PREFIX + ",".join(f"{k}={v}" for k, v in keep.items())
+        label = d.get("label") or SOAPY_NAMES.get(driver, driver)
+        out.append((dev_id, f"{label} — wide panadapter (SoapySDR)"))
+    return out
+
+
+def is_sdr(device):
+    return device == SDR_ID or (device or "").startswith(SOAPY_PREFIX)
+
+
+class SoapySource(SdrSource):
+    """A wide panadapter from any SDR with a SoapySDR module (SDRplay, Airspy, HackRF, LimeSDR, PlutoSDR...): the same
+    picture and protocol as the RTL-SDR source. Untested on real hardware except through SoapySDR's own RTL-SDR module."""
+
+    def __init__(self, device_id, gain, ppm, test_hz, flrig):
+        import numpy  # noqa: F401
+        try:
+            import SoapySDR  # noqa: F401
+        except ImportError:
+            print("This SDR needs SoapySDR: sudo apt install python3-soapysdr soapysdr-module-all", file=sys.stderr)
+            sys.exit(2)
+        self.device_id = device_id
+        self.args = device_id[len(SOAPY_PREFIX):]
+        self.gain, self.ppm, self.test_hz, self.flrig_url = gain, ppm, test_hz, flrig
+        self.dial = test_hz or 0
+        self.ptt = False
+        self.sdr_centre = 0
+        self.dev = None
+        self.stream = None
+
+    def describe(self):
+        return self.device_id
+
+    @staticmethod
+    def pick_rate(dev, rx):
+        """A sample rate of about 2 MS/s: wide enough for +/-100 kHz around a dial 250 kHz from the SDR's centre, small
+        enough to keep the PC's load down. Prefers exactly 2 MS/s, else the lowest offered rate of at least 768 kS/s."""
+        listed = sorted(float(r) for r in dev.listSampleRates(rx, 0))
+        ranges = [(float(r.minimum()), float(r.maximum())) for r in dev.getSampleRateRange(rx, 0)]
+        if any(lo <= 2e6 <= hi for lo, hi in ranges) or 2e6 in listed:
+            return 2e6
+        ok = [r for r in listed if r >= 768e3]
+        if ok:
+            return ok[0]
+        ok = [max(lo, 768e3) for lo, hi in ranges if hi >= 768e3]
+        if ok:
+            return min(ok)
+        return listed[-1] if listed else 2e6
+
+    def close(self):
+        try:
+            if self.stream is not None:
+                self.dev.deactivateStream(self.stream)
+                self.dev.closeStream(self.stream)
+        except Exception:
+            pass
+        self.stream = None
+        self.dev = None
+
+    def set_gain(self, rx):
+        dev = self.dev
+        if self.gain is None:
+            if dev.hasGainMode(rx, 0):
+                dev.setGainMode(rx, 0, True)
+            else:   # no automatic gain (HackRF, for one): the middle of the range
+                r = dev.getGainRange(rx, 0)
+                dev.setGain(rx, 0, (r.minimum() + r.maximum()) / 2)
+        else:
+            if dev.hasGainMode(rx, 0):
+                dev.setGainMode(rx, 0, False)
+            r = dev.getGainRange(rx, 0)
+            dev.setGain(rx, 0, min(max(self.gain, r.minimum()), r.maximum()))
+
+    def covers(self, rx, hz):
+        try:
+            return any(r.minimum() <= hz <= r.maximum() for r in self.dev.getFrequencyRange(rx, 0))
+        except Exception:
+            return True
+
+    def run(self, pan):
+        import numpy as np
+        import SoapySDR
+        from SoapySDR import SOAPY_SDR_RX as RX, SOAPY_SDR_CF32 as CF32
+        if not self.test_hz:
+            threading.Thread(target=self.follow_flrig, args=(pan,), daemon=True).start()
+        while not pan.stopping:
+            if not self.dial:
+                time.sleep(0.3)
+                continue
+            try:
+                self.dev = SoapySDR.Device(self.args)
+                rate = self.pick_rate(self.dev, RX)
+                self.dev.setSampleRate(RX, 0, rate)
+                rate = float(self.dev.getSampleRate(RX, 0))
+                n = 1 << max(10, min(16, int(round(np.log2(rate / 125.0)))))   # bins of about 125 Hz
+                bin_hz = rate / n
+                ffts_per_frame = max(1, int(round(rate * 0.096 / n)))
+                window = np.hanning(n).astype(np.float32)
+                try:
+                    if self.dev.hasDCOffsetMode(RX, 0):
+                        self.dev.setDCOffsetMode(RX, 0, True)
+                    if self.ppm and self.dev.hasFrequencyCorrection(RX, 0):
+                        self.dev.setFrequencyCorrection(RX, 0, float(self.ppm))
+                except Exception:
+                    pass
+                self.set_gain(RX)
+                self.sdr_centre = max(self.dial - SDR_OFFSET, 500_000)
+                self.dev.setFrequency(RX, 0, float(self.sdr_centre))
+                self.stream = self.dev.setupStream(RX, CF32)
+                self.dev.activateStream(self.stream)
+                pan.error = ""
+                buf = np.zeros(n, dtype=np.complex64)
+                acc = np.zeros(n, dtype=np.float32)
+                n_acc = over = counted = 0
+                peak = 0.0
+                skip_until = time.time() + 0.15
+                while not pan.stopping:
+                    if not self.covers(RX, self.dial):
+                        pan.error = f"{self.dial / 1e6:.3f} MHz is outside what this SDR covers (it may need an upconverter)"
+                        time.sleep(0.5)
+                        continue
+                    off = self.dial - self.sdr_centre
+                    if not (SDR_RETUNE_BAND[0] <= off <= SDR_RETUNE_BAND[1]) and max(self.dial - SDR_OFFSET, 500_000) != self.sdr_centre:
+                        self.sdr_centre = max(self.dial - SDR_OFFSET, 500_000)
+                        self.dev.setFrequency(RX, 0, float(self.sdr_centre))
+                        acc[:] = 0; n_acc = 0
+                        skip_until = time.time() + 0.15
+                    got = 0
+                    while got < n:
+                        sr = self.dev.readStream(self.stream, [buf[got:]], n - got, timeoutUs=1_000_000)
+                        if sr.ret < 0:
+                            if sr.ret == -4:   # overflow: samples were dropped, carry on
+                                continue
+                            raise RuntimeError(f"stream error {SoapySDR.errToStr(sr.ret)}")
+                        got += sr.ret
+                    if time.time() < skip_until:
+                        continue
+                    if pan.error.startswith(f"{self.dial / 1e6:.3f}") or pan.error.startswith("SDR:"):
+                        pan.error = ""
+                    mag = np.maximum(np.abs(buf.real), np.abs(buf.imag))
+                    over += int(np.count_nonzero(mag > 0.99))
+                    counted += n
+                    peak = max(peak, float(mag.max()))
+                    acc += np.abs(np.fft.fft(buf * window)) ** 2
+                    n_acc += 1
+                    if n_acc >= ffts_per_frame:
+                        spec = np.fft.fftshift(acc / n_acc)
+                        acc[:] = 0; n_acc = 0
+                        frame = spectrum_frame(spec, bin_hz, self.sdr_centre, self.dial,
+                                               bool(counted and over / counted > 0.001), floor=1e-12)
+                        if frame is not None:
+                            pan.broadcast(frame)
+                        if counted >= rate:
+                            pan.peak, pan.clip = min(peak, 1.0), over / counted
+                            over = counted = 0
+                            peak = 0.0
+                        pan.extra = {"sdr_centre": self.sdr_centre, "dial": self.dial, "ptt": self.ptt,
+                                     "sdr_rate": rate}
+            except Exception as e:
+                pan.error = f"SDR: {e} — retrying"
+                pan.peak = pan.clip = 0.0
+            finally:
+                self.close()
+            if not pan.stopping:
+                time.sleep(3)
 
 
 # ---------------------------------------------------------------- the server
@@ -446,7 +655,8 @@ def main():
     ap = argparse.ArgumentParser(description="Feeds the Waterfall tab in Cat Explorer.")
     ap.add_argument("--device", help="sound input to record (see --list)")
     ap.add_argument("--sdr", action="store_true", help="use an RTL-SDR instead of a sound card")
-    ap.add_argument("--gain", help="RTL-SDR gain in dB, or 'auto' (default auto; no effect below 24 MHz)")
+    ap.add_argument("--soapy", metavar="ARGS", help="use another SDR through SoapySDR, e.g. driver=sdrplay (see --list)")
+    ap.add_argument("--gain", help="SDR gain in dB, or 'auto' (default auto; no effect on an RTL-SDR below 24 MHz)")
     ap.add_argument("--ppm", type=int, default=0, help="RTL-SDR frequency correction in ppm")
     ap.add_argument("--test-freq", type=float, help="RTL-SDR: stay on this frequency in MHz instead of following FLRig")
     ap.add_argument("--flrig", default="http://127.0.0.1:12345", help="FLRig's XML-RPC address (default %(default)s)")
@@ -460,10 +670,21 @@ def main():
               "No PulseAudio/PipeWire inputs found; try `arecord -l` for ALSA devices.")
         if rtlsdr_present():
             print(f"{SDR_ID}    (RTL-SDR, use --sdr)")
+        for dev_id, desc in soapy_devices():
+            print(f"{dev_id}    ({desc}; use --device {dev_id})")
         return
 
-    if a.sdr or a.device == SDR_ID:
-        gain = None if a.gain in (None, "auto") else float(a.gain)
+    if a.soapy:
+        a.device = SOAPY_PREFIX + a.soapy
+
+    gain = None if a.gain in (None, "auto") else float(a.gain)
+    if (a.device or "").startswith(SOAPY_PREFIX):
+        try:
+            source = SoapySource(a.device, gain, a.ppm, int(a.test_freq * 1e6) if a.test_freq else 0, a.flrig)
+        except ImportError:
+            print("This SDR needs numpy: sudo apt install python3-numpy", file=sys.stderr)
+            sys.exit(2)
+    elif a.sdr or a.device == SDR_ID:
         try:
             source = SdrSource(gain, a.ppm, int(a.test_freq * 1e6) if a.test_freq else 0, a.flrig)
         except ImportError:
