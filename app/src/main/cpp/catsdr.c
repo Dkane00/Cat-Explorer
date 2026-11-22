@@ -1,3 +1,5 @@
+/* Copyright (C) 2026 David Kane (W6MZT)
+ * SPDX-License-Identifier: GPL-3.0-or-later */
 /*
  * Cat Explorer — bridge between Kotlin (net.kanenet.catexplorer.audio.UsbSdr) and the SDR drivers built into the app.
  *

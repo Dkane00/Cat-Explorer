@@ -36,7 +36,16 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
+    // the licence and the third-party notices travel inside the app, shown under Settings → About
+    sourceSets["main"].assets.srcDir(layout.buildDirectory.dir("generated/legal-assets"))
 }
+
+val copyLegal by tasks.registering(Copy::class) {
+    from(rootProject.file("LICENSE"), rootProject.file("THIRD-PARTY-NOTICES.md"))
+    into(layout.buildDirectory.dir("generated/legal-assets"))
+}
+tasks.named("preBuild") { dependsOn(copyLegal) }
+tasks.matching { it.name.endsWith("Assets") || it.name.contains("Lint") }.configureEach { if (name != "copyLegal") dependsOn(copyLegal) }
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.09.03"))

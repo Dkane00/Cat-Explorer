@@ -172,13 +172,22 @@ The user guide PDF is built from `docs/guide/make-guide.py` and the screenshots 
 
 ## License
 
-Cat Explorer's own code is open source under the [MIT License](LICENSE). Copyright (c) 2026 David Kane (W6MZT).
+Cat Explorer is free software: you can redistribute it and/or modify it under the terms of the **GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version** — see [LICENSE](LICENSE). It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Copyright (C) 2026 David Kane (W6MZT).
 
-The app also includes libraries by other people, in `app/src/main/cpp`, each with its own license file there:
+This covers the app, the PC Panadapter and the user guide. (Releases up to v1.1.0 were published under the MIT License; from v1.2.0 the project is GPL-3.0-or-later.)
+
+It includes the work of others, all under licences compatible with GPL version 3. [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) lists each one with its copyright and licence; the app shows the same under **Settings → About**:
 
 - **librtlsdr** from [RTL-SDR Blog](https://github.com/rtlsdrblog/rtl-sdr-blog) (GPL version 2 or later), with one small addition for Android marked in the source: `rtlsdr_open_fd()`.
 - **libusb** 1.0.27 from [libusb.info](https://github.com/libusb/libusb) (LGPL version 2.1 or later), unchanged.
 - **libairspy** and **libairspyhf** from [Airspy](https://github.com/airspy) (BSD), unchanged.
 - **libhackrf** from [Great Scott Gadgets](https://github.com/greatscottgadgets/hackrf) (BSD), with one small addition for Android marked in the source: `hackrf_open_fd()`.
+- **28 waterfall colour palettes** from [JS8Call](https://github.com/js8call/js8call) (GPL version 3), which inherited them from [WSJT-X](https://wsjt.sourceforge.io/). As JS8Call asks of works that use any part of it:
 
-Because the GPL driver is built into the APK, the APK as a whole is distributed under the terms of the GNU GPL version 2 or later, with complete source in this repository. Cat Explorer's own files stay MIT-licensed and can be reused under MIT on their own.
+  > "The algorithms, source code, look-and-feel of WSJT-X and related programs, and protocol specifications for the modes FSK441, FT8, JT4, JT6M, JT9, JT65, JTMS, QRA64, ISCAT, MSK144 are Copyright (C) 2001-2018 by one or more of the following authors: Joseph Taylor, K1JT; Bill Somerville, G4WJS; Steven Franke, K9AN; Nico Palermo, IV3NWV; Greg Beam, KI7MT; Michael Black, W9MDB; Edson Pereira, PY2SDR; Philip Karn, KA9Q; and other members of the WSJT Development Group.
+  > Further, the source code of JS8Call contains material Copyright (C) 2018-2019 by Jordan Sherer, KN4CRD."
+
+  Cat Explorer is not affiliated with, supported by or endorsed by the JS8Call or WSJT-X developers.
+- **usb-serial-for-android** (MIT), **AndroidX / Jetpack Compose** and **kotlinx.coroutines** (Apache 2.0).
+
+The PC Panadapter uses Python, GTK, numpy and SoapySDR, installed separately from your system's packages. SDRplay's API is SDRplay's own closed driver, downloaded from [sdrplay.com](https://www.sdrplay.com/downloads/) under SDRplay's licence; it is not part of Cat Explorer.

@@ -1,3 +1,5 @@
+# Copyright (C) 2026 David Kane (W6MZT)
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Native code for the tablet's own RTL-SDR panadapter.
 #
 #  libusb/   libusb 1.0.27 (LGPL 2.1), unchanged, from https://github.com/libusb/libusb

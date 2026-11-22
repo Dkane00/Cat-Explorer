@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (C) 2026 David Kane (W6MZT)
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Installs the Cat Explorer Panadapter (the PC side of the app's waterfall).
 #
 #   ./install.sh              install for you only (no password needed)

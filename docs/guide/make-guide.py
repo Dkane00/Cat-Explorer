@@ -1,3 +1,5 @@
+# Copyright (C) 2026 David Kane (W6MZT)
+# SPDX-License-Identifier: GPL-3.0-or-later
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib import colors
@@ -477,7 +479,7 @@ s += [*sec('14. Settings', 4.6),
       Table([[[P('<b>Panadapter port</b> is the network port of Cat Explorer Panadapter on the PC (7366 unless you changed it there). '
                  'Type a new number and tap <b>Save</b>.'),
                P('<b>Colours</b> picks the waterfall\'s colour theme. Tap it for a list with a preview strip of each one, quiet on the left '
-                 'and loud on the right. <b>Cat Explorer</b> is the app\'s own; the other 28 are the palettes that come with JS8Call. '
+                 'and loud on the right. <b>Cat Explorer</b> is the app\'s own; the other 28 are the palettes that come with JS8Call (credits in section 17). '
                  'Changing it recolours the whole waterfall at once.'),
                P('<b>Band edges (US)</b> turns the band-edge lines and dimming on or off (section 15).'),
                P('<b>License bars</b> chooses the bars under the waterfall: <b>Off</b>, one class (<b>Technician</b>, <b>General</b>, '
@@ -634,6 +636,31 @@ s += [*sec('16. USB and FLRig: what is available'),
           ['Change the colours', 'Settings, then tap a colour.'],
           ['Disconnect', 'Tap Disconnect on the status card.'],
       ], [2.8 * inch, 4.2 * inch])
+
+# ---------------------------------------------------------------- 17 licence
+s += [*sec('17. Licence and credits', 7.5),
+      P('Cat Explorer, the PC Panadapter and this guide are Copyright (C) 2026 David Kane (W6MZT). They are free software: you may '
+        'share and change them under the terms of the <b>GNU General Public License, version 3 or (at your option) any later '
+        'version</b>. They come with <b>no warranty</b>. The full licence, and the source code, are at '
+        "<link href='https://github.com/Dkane00/Cat-Explorer' color='#0B6FA4'><u>github.com/Dkane00/Cat-Explorer</u></link>. "
+        'In the app, <b>Settings → About</b> shows the licence and the notices below.'),
+      P('Cat Explorer includes the work of others, each under a licence compatible with GPL version 3:')] + B([
+          '<b>librtlsdr</b> from RTL-SDR Blog (GPL version 2 or later), with a small addition for Android.',
+          '<b>libusb</b> (LGPL version 2.1 or later).',
+          '<b>libairspy</b> and <b>libairspyhf</b> from Airspy, and <b>libhackrf</b> from Great Scott Gadgets (BSD licences), with a '
+          'small addition for Android in libhackrf.',
+          '<b>usb-serial-for-android</b> (MIT), and Google\'s <b>AndroidX</b> and JetBrains\' <b>Kotlin</b> libraries (Apache 2.0).',
+          '<b>28 waterfall colour palettes from JS8Call</b> (GPL version 3), which inherited them from WSJT-X.']) + [
+      P('As JS8Call asks of works that use any part of it under the GPL:'),
+      P('"The algorithms, source code, look-and-feel of WSJT-X and related programs, and protocol specifications for the modes FSK441, '
+        'FT8, JT4, JT6M, JT9, JT65, JTMS, QRA64, ISCAT, MSK144 are Copyright (C) 2001-2018 by one or more of the following authors: '
+        'Joseph Taylor, K1JT; Bill Somerville, G4WJS; Steven Franke, K9AN; Nico Palermo, IV3NWV; Greg Beam, KI7MT; Michael Black, '
+        'W9MDB; Edson Pereira, PY2SDR; Philip Karn, KA9Q; and other members of the WSJT Development Group. Further, the source code '
+        'of JS8Call contains material Copyright (C) 2018-2019 by Jordan Sherer, KN4CRD."', small),
+      P('Cat Explorer is not affiliated with, supported by or endorsed by the JS8Call or WSJT-X developers, or by Yaesu, SDRplay, '
+        'Airspy, Great Scott Gadgets or RTL-SDR Blog. SDRplay\'s API is SDRplay\'s own driver, downloaded from their website under '
+        'their licence. The full list, with each copyright, is in THIRD-PARTY-NOTICES.md with the source code.', small),
+      P('This guide uses the Liberation fonts (SIL Open Font License 1.1).', small)]
 
 doc.multiBuild(s)
 print('built', OUT)

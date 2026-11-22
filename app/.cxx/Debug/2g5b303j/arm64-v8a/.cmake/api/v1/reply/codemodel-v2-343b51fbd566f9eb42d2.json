@@ -49,42 +49,42 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "airspy::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-airspy-Debug-67e1cc351cac9d4df5f0.json",
+					"jsonFile" : "target-airspy-Debug-f25795fbf0119480a9ae.json",
 					"name" : "airspy",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "airspyhf::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-airspyhf-Debug-f938531a325d4381a483.json",
+					"jsonFile" : "target-airspyhf-Debug-dfae7a78c3bb7c97aa0a.json",
 					"name" : "airspyhf",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "catsdr::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-catsdr-Debug-f3aefe1dc0042239b346.json",
+					"jsonFile" : "target-catsdr-Debug-1e64e319f1f826fa7a3d.json",
 					"name" : "catsdr",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "hackrf::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-hackrf-Debug-ac1dda9adee7e376ea85.json",
+					"jsonFile" : "target-hackrf-Debug-c04b58c45c9b13e849d3.json",
 					"name" : "hackrf",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "rtlsdr::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-rtlsdr-Debug-aefa8e95a5d1e1c18912.json",
+					"jsonFile" : "target-rtlsdr-Debug-3c07f3bf7b1000c0fff9.json",
 					"name" : "rtlsdr",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "usb1::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-usb1-Debug-0936645f77c0c1e54052.json",
+					"jsonFile" : "target-usb1-Debug-a07bd63552f759510af9.json",
 					"name" : "usb1",
 					"projectIndex" : 0
 				}
@@ -94,7 +94,7 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/armeabi-v7a",
+		"build" : "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
 		"source" : "/home/david/Documents/Cat-Explorer/app/src/main/cpp"
 	},
 	"version" : 

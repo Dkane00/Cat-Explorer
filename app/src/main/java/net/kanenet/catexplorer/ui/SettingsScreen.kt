@@ -1,3 +1,5 @@
+// Copyright (C) 2026 David Kane (W6MZT)
+// SPDX-License-Identifier: GPL-3.0-or-later
 package net.kanenet.catexplorer.ui
 
 import androidx.compose.foundation.Canvas
@@ -192,6 +194,8 @@ private fun SettingsList(vm: RigViewModel, theme: ThemeSettings, onClose: () -> 
             OutlinedButton({ vm.resetThemeColors() }, enabled = ThemeColor.entries.any { theme.isCustom(it) }) {
                 Text("Reset all ${if (theme.dark) "dark" else "light"} colours to default")
             }
+            Spacer(Modifier.height(16.dp))
+            AboutSection(theme)
         }
     }
 }
@@ -320,4 +324,59 @@ internal fun SdrGainSetting(vm: RigViewModel, theme: ThemeSettings, compact: Boo
         } + if (compact) "" else " An SDR on the PC has its own gain in the Panadapter window.",
         fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp),
     )
+}
+
+/** JS8Call asks works that use part of it under the GPL to show this notice prominently (the waterfall palettes). */
+internal const val JS8CALL_NOTICE =
+    "\"The algorithms, source code, look-and-feel of WSJT-X and related programs, and protocol specifications for the modes " +
+        "FSK441, FT8, JT4, JT6M, JT9, JT65, JTMS, QRA64, ISCAT, MSK144 are Copyright (C) 2001-2018 by one or more of the " +
+        "following authors: Joseph Taylor, K1JT; Bill Somerville, G4WJS; Steven Franke, K9AN; Nico Palermo, IV3NWV; Greg Beam, " +
+        "KI7MT; Michael Black, W9MDB; Edson Pereira, PY2SDR; Philip Karn, KA9Q; and other members of the WSJT Development Group.\n" +
+        "Further, the source code of JS8Call contains material Copyright (C) 2018-2019 by Jordan Sherer, KN4CRD.\""
+
+/** Version, licence, credits, and the full licence and notices from the app's assets. */
+@Composable
+private fun AboutSection(theme: ThemeSettings) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val version = remember {
+        runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull() ?: ""
+    }
+    var showing by remember { mutableStateOf<String?>(null) }
+    SectionTitle("About")
+    Text("Cat Explorer $version", fontSize = 16.sp)
+    Text(
+        "Copyright (C) 2026 David Kane (W6MZT). Free software under the GNU General Public License, version 3 or any later " +
+            "version: you may share and change it under those terms. It comes with NO WARRANTY. Source code: " +
+            "github.com/Dkane00/Cat-Explorer",
+        fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp),
+    )
+    Text(
+        "Includes RTL-SDR Blog's librtlsdr (GPL 2+), libusb (LGPL 2.1+), libairspy, libairspyhf and libhackrf (BSD), " +
+            "usb-serial-for-android (MIT) and AndroidX (Apache 2.0). 28 waterfall palettes come from JS8Call (GPL 3), which " +
+            "inherited them from WSJT-X:",
+        fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 6.dp),
+    )
+    Text(JS8CALL_NOTICE, fontSize = 11.sp, lineHeight = 15.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+        OutlinedButton({ showing = "LICENSE" }) { Text("Licence (GPL v3)") }
+        OutlinedButton({ showing = "THIRD-PARTY-NOTICES.md" }) { Text("Third-party notices") }
+    }
+    showing?.let { file ->
+        val text = remember(file) { runCatching { ctx.assets.open(file).bufferedReader().readText() }.getOrElse { "($file is missing from this build)" } }
+        androidx.compose.ui.window.Dialog({ showing = null }, androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+            Column(
+                Modifier.fillMaxSize().padding(24.dp).clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface).padding(16.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(if (file == "LICENSE") "GNU General Public License v3" else "Third-party notices", fontSize = 18.sp, modifier = Modifier.weight(1f))
+                    TextButton({ showing = null }) { Text("Close") }
+                }
+                Text(
+                    text, fontSize = 11.sp, lineHeight = 14.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                )
+            }
+        }
+    }
 }

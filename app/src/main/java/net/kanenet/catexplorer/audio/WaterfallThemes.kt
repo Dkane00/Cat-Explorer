@@ -1,8 +1,21 @@
+// Copyright (C) 2026 David Kane (W6MZT)
+// SPDX-License-Identifier: GPL-3.0-or-later
 package net.kanenet.catexplorer.audio
 
 /**
  * Waterfall colour themes. "Cat Explorer" is the app's own; the rest are the colour stops of the palettes that come with
  * JS8Call (the same set WSJT-X has), spread evenly from quiet to loud the way those programs do.
+ *
+ * The palettes are from JS8Call (https://github.com/js8call/js8call), licensed under the GNU GPL version 3, which
+ * inherited them from WSJT-X. As JS8Call asks of works that use any part of it under the GPL:
+ *
+ *   "The algorithms, source code, look-and-feel of WSJT-X and related programs, and protocol specifications for the modes
+ *   FSK441, FT8, JT4, JT6M, JT9, JT65, JTMS, QRA64, ISCAT, MSK144 are Copyright (C) 2001-2018 by one or more of the
+ *   following authors: Joseph Taylor, K1JT; Bill Somerville, G4WJS; Steven Franke, K9AN; Nico Palermo, IV3NWV; Greg Beam,
+ *   KI7MT; Michael Black, W9MDB; Edson Pereira, PY2SDR; Philip Karn, KA9Q; and other members of the WSJT Development Group.
+ *   Further, the source code of JS8Call contains material Copyright (C) 2018-2019 by Jordan Sherer, KN4CRD."
+ *
+ * The same notice is shown in the app under Settings, About. See THIRD-PARTY-NOTICES.md.
  */
 object WaterfallThemes {
     class Theme(val name: String, val colors: IntArray)

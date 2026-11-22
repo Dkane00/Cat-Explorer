@@ -3,7 +3,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "libhackrf.a"
+			"path" : "libairspy.a"
 		}
 	],
 	"backtrace" : 1,
@@ -14,7 +14,6 @@
 			"add_library",
 			"target_link_libraries",
 			"target_compile_options",
-			"target_compile_definitions",
 			"target_include_directories"
 		],
 		"files" : 
@@ -29,31 +28,25 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 41,
+				"line" : 31,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 45,
+				"line" : 34,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 44,
+				"line" : 33,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 43,
-				"parent" : 0
-			},
-			{
-				"command" : 4,
-				"file" : 0,
-				"line" : 42,
+				"line" : 32,
 				"parent" : 0
 			}
 		]
@@ -71,22 +64,11 @@
 					"fragment" : "-Wno-everything"
 				}
 			],
-			"defines" : 
-			[
-				{
-					"backtrace" : 4,
-					"define" : "LIBRARY_RELEASE=\"cat-explorer\""
-				},
-				{
-					"backtrace" : 4,
-					"define" : "LIBRARY_VERSION=\"2026.01\""
-				}
-			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 5,
-					"path" : "/home/david/Documents/Cat-Explorer/app/src/main/cpp/hackrf"
+					"backtrace" : 4,
+					"path" : "/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy"
 				},
 				{
 					"backtrace" : 2,
@@ -96,7 +78,9 @@
 			"language" : "C",
 			"sourceIndexes" : 
 			[
-				0
+				0,
+				1,
+				2
 			],
 			"sysroot" : 
 			{
@@ -111,9 +95,9 @@
 			"id" : "usb1::@6890427a1f51a3e7e1df"
 		}
 	],
-	"id" : "hackrf::@6890427a1f51a3e7e1df",
-	"name" : "hackrf",
-	"nameOnDisk" : "libhackrf.a",
+	"id" : "airspy::@6890427a1f51a3e7e1df",
+	"name" : "airspy",
+	"nameOnDisk" : "libairspy.a",
 	"paths" : 
 	{
 		"build" : ".",
@@ -125,7 +109,9 @@
 			"name" : "Source Files",
 			"sourceIndexes" : 
 			[
-				0
+				0,
+				1,
+				2
 			]
 		}
 	],
@@ -134,7 +120,19 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "hackrf/hackrf.c",
+			"path" : "airspy/airspy.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "airspy/iqconverter_float.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "airspy/iqconverter_int16.c",
 			"sourceGroupIndex" : 0
 		}
 	],

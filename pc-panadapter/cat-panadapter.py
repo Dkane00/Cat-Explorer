@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026 David Kane (W6MZT)
+# SPDX-License-Identifier: GPL-3.0-or-later
 """
 Window for the Cat Explorer Panadapter.
 
@@ -232,7 +234,13 @@ class PanadapterWindow(Gtk.Window):
         foot = Gtk.Label(xalign=0, wrap=True, max_width_chars=70,
                          label="You can close this window: the panadapter keeps running in the background until you press Stop.")
         foot.get_style_context().add_class("dim-label")
-        grid.attach(foot, 0, row, 3, 1)
+        grid.attach(foot, 0, row, 3, 1); row += 1
+        legal = Gtk.Label(xalign=0, wrap=True, max_width_chars=70)
+        legal.set_markup("<small>Cat Explorer Panadapter · Copyright (C) 2026 David Kane (W6MZT) · free software under the "
+                         "<a href='https://www.gnu.org/licenses/gpl-3.0.html'>GNU GPL v3 or later</a>, with no warranty · "
+                         "<a href='https://github.com/Dkane00/Cat-Explorer'>source</a></small>")
+        legal.get_style_context().add_class("dim-label")
+        grid.attach(legal, 0, row, 3, 1)
 
         self.fill_devices()
         self.refresh()

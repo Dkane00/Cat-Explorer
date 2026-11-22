@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026 David Kane (W6MZT)
+# SPDX-License-Identifier: GPL-3.0-or-later
 """
 Cat Explorer Panadapter.
 
