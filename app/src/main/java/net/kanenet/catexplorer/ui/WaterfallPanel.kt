@@ -81,6 +81,7 @@ fun WaterfallPanel(s: RigState, vm: RigViewModel, modifier: Modifier = Modifier,
                 TextButton({ vm.setWaterfallRange(range - 5) }, Modifier.height(28.dp), contentPadding = PaddingValues(horizontal = 6.dp)) { Text("◀", fontSize = 12.sp) }
                 Text("$range dB", fontSize = 12.sp)
                 TextButton({ vm.setWaterfallRange(range + 5) }, Modifier.height(28.dp), contentPadding = PaddingValues(horizontal = 6.dp)) { Text("▶", fontSize = 12.sp) }
+                if (wideMode && s.directUsb) SdrGainButton(vm)
                 val clip = if (wideMode) 0f else e?.clipFraction ?: 0f
                 @Suppress("UNUSED_EXPRESSION") frame   // re-read the clip level as rows arrive
                 when {
@@ -393,5 +394,25 @@ internal fun PaletteStrip(name: String, modifier: Modifier) {
         val n = 64
         val w = size.width / n
         for (i in 0 until n) drawRect(Color(colors[i * 255 / (n - 1)]), Offset(i * w, 0f), androidx.compose.ui.geometry.Size(w + 1f, size.height))
+    }
+}
+
+/** "Gain" on the waterfall bar for the tablet's own RTL-SDR: shows the setting, and opens Auto / Manual with a slider. */
+@Composable
+private fun SdrGainButton(vm: RigViewModel) {
+    val th = LocalThemeSettings.current
+    val gain by vm.sdrGain.collectAsState()
+    val direct by vm.sdrDirect.collectAsState()
+    var open by remember { mutableStateOf(false) }
+    Box {
+        OutlinedButton({ open = true }, Modifier.height(28.dp), contentPadding = PaddingValues(horizontal = 10.dp)) {
+            Text("Gain " + if (gain < 0) "Auto" else "%.1f dB".format(gain / 10.0), fontSize = 12.sp,
+                color = if (direct) th[ThemeColor.LABEL] else Color.Unspecified)
+        }
+        DropdownMenu(open, { open = false }) {
+            Column(Modifier.width(380.dp).padding(horizontal = 16.dp, vertical = 8.dp)) {
+                SdrGainSetting(vm, th, compact = true)
+            }
+        }
     }
 }

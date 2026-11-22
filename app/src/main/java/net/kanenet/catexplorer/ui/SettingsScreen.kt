@@ -282,7 +282,7 @@ private fun ColorEditor(vm: RigViewModel, theme: ThemeSettings, role: ThemeColor
 
 /** Gain for an RTL-SDR plugged into the tablet: automatic, or one of the steps the dongle reports. */
 @Composable
-private fun SdrGainSetting(vm: RigViewModel, theme: ThemeSettings) {
+internal fun SdrGainSetting(vm: RigViewModel, theme: ThemeSettings, compact: Boolean = false) {
     val gain by vm.sdrGain.collectAsState()
     val steps by vm.sdrGains.collectAsState()
     val direct by vm.sdrDirect.collectAsState()
@@ -309,7 +309,7 @@ private fun SdrGainSetting(vm: RigViewModel, theme: ThemeSettings) {
             direct -> "Right now the SDR samples HF directly (an RTL-SDR Blog V3 below 24 MHz), so gain has no effect; it applies on " +
                 "10 m and 6 m, and on SDRs with an HF front end. Lower it if the waterfall says the SDR is overloaded."
             else -> "Higher gain shows weaker signals; lower it if the waterfall says the SDR is overloaded or the band looks smeared."
-        } + " An SDR on the PC has its own gain in the Panadapter window.",
+        } + if (compact) "" else " An SDR on the PC has its own gain in the Panadapter window.",
         fontSize = 12.sp, color = theme[ThemeColor.LABEL], modifier = Modifier.padding(top = 4.dp),
     )
 }
