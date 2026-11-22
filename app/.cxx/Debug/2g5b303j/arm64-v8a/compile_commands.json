@@ -81,7 +81,37 @@
 },
 {
   "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
-  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Dcatsdr_EXPORTS -Drtlsdr_STATIC -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -o CMakeFiles/catsdr.dir/catsdr.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/catsdr.c",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/airspy.dir/airspy/airspy.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy/airspy.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy/airspy.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/airspy.dir/airspy/iqconverter_float.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy/iqconverter_float.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy/iqconverter_float.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/airspy.dir/airspy/iqconverter_int16.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy/iqconverter_int16.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy/iqconverter_int16.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/airspyhf.dir/airspyhf/airspyhf.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf/airspyhf.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf/airspyhf.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/airspyhf.dir/airspyhf/iqbalancer.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf/iqbalancer.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf/iqbalancer.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -DLIBRARY_RELEASE=\\\"cat-explorer\\\" -DLIBRARY_VERSION=\\\"2026.01\\\" -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/hackrf -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything -o CMakeFiles/hackrf.dir/hackrf/hackrf.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/hackrf/hackrf.c",
+  "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/hackrf/hackrf.c"
+},
+{
+  "directory": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a",
+  "command": "/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/clang --target=aarch64-none-linux-android24 --sysroot=/home/david/Android/Sdk/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/sysroot -Dcatsdr_EXPORTS -Drtlsdr_STATIC -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/hackrf -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2 -o CMakeFiles/catsdr.dir/catsdr.c.o -c /home/david/Documents/Cat-Explorer/app/src/main/cpp/catsdr.c",
   "file": "/home/david/Documents/Cat-Explorer/app/src/main/cpp/catsdr.c"
 }
 ]

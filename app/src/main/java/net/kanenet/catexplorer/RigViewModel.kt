@@ -546,81 +546,110 @@ class RigViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private val _sdrGain = MutableStateFlow(prefs.getInt("sdr_gain", -1))
-    /** Gain of the tablet's RTL-SDR in tenths of a dB; -1 is automatic. */
-    val sdrGain = _sdrGain.asStateFlow()
-    fun setSdrGain(tenths: Int) { _sdrGain.value = tenths; prefs.edit().putInt("sdr_gain", tenths).apply() }
+    private val _sdrKind = MutableStateFlow<net.kanenet.catexplorer.audio.SdrKind?>(null)
+    /** The kind of SDR plugged into the tablet, if any the app can run. */
+    val sdrKind = _sdrKind.asStateFlow()
 
-    private val _sdrGains = MutableStateFlow(
-        prefs.getString("sdr_gains", "").orEmpty().split(",").mapNotNull { it.toIntOrNull() },
-    )
-    /** The gain steps the tablet's RTL-SDR offers (tenths of a dB), remembered from the last time it ran. */
+    // gain settings are kept per kind of SDR (their steps mean different things); the RTL-SDR keeps its original keys
+    private fun gainKey(k: net.kanenet.catexplorer.audio.SdrKind?) = if (k == null || k == net.kanenet.catexplorer.audio.SdrKind.RTL) "sdr_gain" else "sdr_gain_${k.name}"
+    private fun gainsKey(k: net.kanenet.catexplorer.audio.SdrKind?) = if (k == null || k == net.kanenet.catexplorer.audio.SdrKind.RTL) "sdr_gains" else "sdr_gains_${k.name}"
+    private fun savedGains(k: net.kanenet.catexplorer.audio.SdrKind?) =
+        prefs.getString(gainsKey(k), "").orEmpty().split(",").mapNotNull { it.toIntOrNull() }
+
+    private val _sdrGain = MutableStateFlow(prefs.getInt("sdr_gain", -1))
+    /** Gain of the tablet's SDR in tenths of a dB (tenths of a level for an Airspy); -1 is automatic. */
+    val sdrGain = _sdrGain.asStateFlow()
+    fun setSdrGain(tenths: Int) { _sdrGain.value = tenths; prefs.edit().putInt(gainKey(_sdrKind.value), tenths).apply() }
+
+    private val _sdrGains = MutableStateFlow(savedGains(null))
+    /** The manual gain steps the tablet's SDR offers, remembered from the last time it ran. */
     val sdrGains = _sdrGains.asStateFlow()
 
     private val _sdrDirect = MutableStateFlow(false)
     /** The tablet's RTL-SDR is sampling HF directly right now, so its gain has no effect. */
     val sdrDirect = _sdrDirect.asStateFlow()
 
-    /** An RTL-SDR is plugged into the tablet (checked when the radio connects over USB and when the card is shown). */
+    /** A supported SDR is plugged into the tablet (checked when the radio connects over USB and while the card shows). */
     private val _tabletSdr = MutableStateFlow(false)
     val tabletSdr = _tabletSdr.asStateFlow()
-    fun checkTabletSdr() { _tabletSdr.value = net.kanenet.catexplorer.audio.RtlSdr.find(getApplication()) != null }
+    /** An SDRplay is plugged in: only the PC can run one, so the waterfall says so. */
+    private val _sdrplay = MutableStateFlow(false)
+    val sdrplay = _sdrplay.asStateFlow()
+    fun checkTabletSdr() {
+        val found = net.kanenet.catexplorer.audio.UsbSdr.find(getApplication())?.second
+        if (found != _sdrKind.value) {
+            _sdrKind.value = found
+            _sdrGain.value = prefs.getInt(gainKey(found), -1)
+            _sdrGains.value = savedGains(found)
+        }
+        _tabletSdr.value = found != null
+        _sdrplay.value = net.kanenet.catexplorer.audio.UsbSdr.sdrplayPresent(getApplication())
+    }
 
     /**
-     * Direct USB connection: runs the RTL-SDR plugged into the tablet itself, following the radio's dial, and feeds the same
-     * wide view the PC Panadapter does. Retries every 3 s if the dongle is missing or stops.
+     * Direct USB connection: runs the SDR plugged into the tablet itself, following the radio's dial, and feeds the same
+     * wide view the PC Panadapter does. Retries every 3 s if the SDR is missing or stops.
      */
     private fun startTabletSdr() {
         val previous = waterfallJob
         waterfallJob = viewModelScope.launch(Dispatchers.IO) {
-            previous?.join()   // a stopped run may still be closing the dongle
+            previous?.join()   // a stopped run may still be closing the SDR
             val T = net.kanenet.catexplorer.audio.TabletSdr
             while (isActive) {
                 checkTabletSdr()
-                if (!_tabletSdr.value) {
-                    _waterfallStatus.value = "Plug an RTL-SDR into the tablet (through a USB hub, beside the radio) for the waterfall."
+                val kind = _sdrKind.value
+                if (kind == null) {
+                    _waterfallStatus.value = if (_sdrplay.value)
+                        "SDRplay radios can only be used through the PC Panadapter (their driver isn't available for Android)."
+                    else "Plug an SDR into the tablet (through a USB hub, beside the radio) for the waterfall: RTL-SDR, Airspy, Airspy HF+ or HackRF."
                     delay(3000); continue
                 }
                 var dial = _state.value.activeHz
                 while (isActive && dial <= 0) { delay(200); dial = _state.value.activeHz }
-                _waterfallStatus.value = "Starting the RTL-SDR…"
+                _waterfallStatus.value = "Starting the ${kind.label}…"
                 _wideMode.value = true   // show the SDR controls (Span) straight away, not the audio ones
-                var sdr: net.kanenet.catexplorer.audio.RtlSdr? = null
+                var sdr: net.kanenet.catexplorer.audio.UsbSdr? = null
                 try {
-                    var centre = T.centreFor(dial)
+                    val lowest = kind.coverage.first().first.coerceAtLeast(500_000L)
+                    var centre = T.centreFor(dial, lowest)
                     var gain = _sdrGain.value
-                    sdr = net.kanenet.catexplorer.audio.RtlSdr.open(getApplication(), T.RATE, centre, gain, 0, T.FFT)
+                    sdr = net.kanenet.catexplorer.audio.UsbSdr.open(getApplication(), centre, gain, 0)
                     val steps = sdr.gains().toList()
                     _sdrGains.value = steps
-                    prefs.edit().putString("sdr_gains", steps.joinToString(",")).apply()
+                    prefs.edit().putString(gainsKey(kind), steps.joinToString(",")).apply()
                     _sdrDirect.value = sdr.directSampling()
-                    _wideMode.value = true
                     val w = wide ?: net.kanenet.catexplorer.audio.WideEngine().also { wide = it }
                     w.rangeDb = _waterfallRange.value.toFloat()
                     w.spanHz = _wideSpan.value
                     _waterfallStatus.value = ""
-                    val power = FloatArray(T.FFT)
+                    val power = FloatArray(sdr.fftSize)
                     val stats = IntArray(3)
                     var skip = 2   // the first reads after (re)tuning hold samples from before it settled
                     while (isActive) {
                         val st = _state.value
                         if (st.activeHz > 0) dial = st.activeHz
-                        if (!T.inRange(dial, centre)) {
-                            centre = T.centreFor(dial); sdr.tune(centre); skip = 2
-                            // moving in or out of direct sampling restarts the tuner, which can forget its gain
+                        if (!kind.covers(dial)) {
+                            _waterfallStatus.value = "The ${kind.label} covers ${kind.coverageText()}; " +
+                                "%.3f MHz is outside that (it would need an upconverter).".format(dial / 1e6)
+                            delay(500); continue
+                        }
+                        if (_waterfallStatus.value.isNotEmpty()) _waterfallStatus.value = ""
+                        if (!T.inRange(dial, centre, lowest)) {
+                            centre = T.centreFor(dial, lowest); sdr.tune(centre); skip = 2
+                            // moving in or out of direct sampling restarts an RTL-SDR's tuner, which can forget its gain
                             sdr.setGain(gain)
                             _sdrDirect.value = sdr.directSampling()
                         }
                         if (_sdrGain.value != gain) { gain = _sdrGain.value; sdr.setGain(gain); w.resetFloor(); skip = 1 }
-                        sdr.readSpectrum(power, T.FFTS_PER_FRAME, stats)
+                        sdr.readSpectrum(power, stats)
                         if (skip > 0) { skip--; continue }
-                        val f = T.frame(power, centre, dial, overload = stats[1] > 0 && stats[0] * 1000 > stats[1]) ?: continue
+                        val f = T.frame(power, sdr.binHz, centre, dial, overload = stats[1] > 0 && stats[0] * 1000 > stats[1]) ?: continue
                         if (w.add(f, frozen = st.ptt)) _waterfallFrame.value++
                     }
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    _waterfallStatus.value = e.message ?: "RTL-SDR stopped"
+                    _waterfallStatus.value = e.message ?: "${kind.label} stopped"
                 } finally {
                     sdr?.close()
                 }

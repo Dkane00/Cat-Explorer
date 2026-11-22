@@ -149,10 +149,12 @@ private fun Card(modifier: Modifier = Modifier, content: @Composable ColumnScope
 private fun HistoryCard(s: RigState, vm: RigViewModel) {
     val history by vm.history.collectAsState()
     val waterfallOn by vm.waterfallOn.collectAsState()
-    // over FLRig the waterfall comes from the PC's Panadapter; over USB only from an RTL-SDR plugged into the tablet itself
+    // over FLRig the waterfall comes from the PC's Panadapter; over USB only from an SDR plugged into the tablet itself
     val tabletSdr by vm.tabletSdr.collectAsState()
     if (s.directUsb) LaunchedEffect(Unit) { while (true) { vm.checkTabletSdr(); kotlinx.coroutines.delay(3000) } }
-    val canWaterfall = !s.directUsb || tabletSdr
+    val sdrplay by vm.sdrplay.collectAsState()
+    // an SDRplay can't be run by the tablet, but the tab still shows so the waterfall can say why
+    val canWaterfall = !s.directUsb || tabletSdr || sdrplay
     val showWaterfall = waterfallOn && canWaterfall
     val th = LocalThemeSettings.current
     @Composable fun Tab(label: String, selected: Boolean, onClick: () -> Unit) = Text(

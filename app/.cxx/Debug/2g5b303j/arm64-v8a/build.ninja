@@ -209,19 +209,137 @@ build librtlsdr.a: C_STATIC_LIBRARY_LINKER__rtlsdr_Debug CMakeFiles/rtlsdr.dir/r
   TARGET_PDB = rtlsdr.a.dbg
 
 # =============================================================================
+# Object build statements for STATIC_LIBRARY target airspy
+
+
+#############################################
+# Order-only phony target for airspy
+
+build cmake_object_order_depends_target_airspy: phony || cmake_object_order_depends_target_usb1
+
+build CMakeFiles/airspy.dir/airspy/airspy.c.o: C_COMPILER__airspy_Debug /home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy/airspy.c || cmake_object_order_depends_target_airspy
+  DEP_FILE = CMakeFiles/airspy.dir/airspy/airspy.c.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything
+  INCLUDES = -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb
+  OBJECT_DIR = CMakeFiles/airspy.dir
+  OBJECT_FILE_DIR = CMakeFiles/airspy.dir/airspy
+
+build CMakeFiles/airspy.dir/airspy/iqconverter_float.c.o: C_COMPILER__airspy_Debug /home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy/iqconverter_float.c || cmake_object_order_depends_target_airspy
+  DEP_FILE = CMakeFiles/airspy.dir/airspy/iqconverter_float.c.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything
+  INCLUDES = -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb
+  OBJECT_DIR = CMakeFiles/airspy.dir
+  OBJECT_FILE_DIR = CMakeFiles/airspy.dir/airspy
+
+build CMakeFiles/airspy.dir/airspy/iqconverter_int16.c.o: C_COMPILER__airspy_Debug /home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy/iqconverter_int16.c || cmake_object_order_depends_target_airspy
+  DEP_FILE = CMakeFiles/airspy.dir/airspy/iqconverter_int16.c.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything
+  INCLUDES = -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb
+  OBJECT_DIR = CMakeFiles/airspy.dir
+  OBJECT_FILE_DIR = CMakeFiles/airspy.dir/airspy
+
+
+# =============================================================================
+# Link build statements for STATIC_LIBRARY target airspy
+
+
+#############################################
+# Link the static library libairspy.a
+
+build libairspy.a: C_STATIC_LIBRARY_LINKER__airspy_Debug CMakeFiles/airspy.dir/airspy/airspy.c.o CMakeFiles/airspy.dir/airspy/iqconverter_float.c.o CMakeFiles/airspy.dir/airspy/iqconverter_int16.c.o || libusb1.a
+  LANGUAGE_COMPILE_FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info
+  OBJECT_DIR = CMakeFiles/airspy.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = libairspy.a
+  TARGET_PDB = airspy.a.dbg
+
+# =============================================================================
+# Object build statements for STATIC_LIBRARY target airspyhf
+
+
+#############################################
+# Order-only phony target for airspyhf
+
+build cmake_object_order_depends_target_airspyhf: phony || cmake_object_order_depends_target_usb1
+
+build CMakeFiles/airspyhf.dir/airspyhf/airspyhf.c.o: C_COMPILER__airspyhf_Debug /home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf/airspyhf.c || cmake_object_order_depends_target_airspyhf
+  DEP_FILE = CMakeFiles/airspyhf.dir/airspyhf/airspyhf.c.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything
+  INCLUDES = -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb
+  OBJECT_DIR = CMakeFiles/airspyhf.dir
+  OBJECT_FILE_DIR = CMakeFiles/airspyhf.dir/airspyhf
+
+build CMakeFiles/airspyhf.dir/airspyhf/iqbalancer.c.o: C_COMPILER__airspyhf_Debug /home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf/iqbalancer.c || cmake_object_order_depends_target_airspyhf
+  DEP_FILE = CMakeFiles/airspyhf.dir/airspyhf/iqbalancer.c.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything
+  INCLUDES = -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb
+  OBJECT_DIR = CMakeFiles/airspyhf.dir
+  OBJECT_FILE_DIR = CMakeFiles/airspyhf.dir/airspyhf
+
+
+# =============================================================================
+# Link build statements for STATIC_LIBRARY target airspyhf
+
+
+#############################################
+# Link the static library libairspyhf.a
+
+build libairspyhf.a: C_STATIC_LIBRARY_LINKER__airspyhf_Debug CMakeFiles/airspyhf.dir/airspyhf/airspyhf.c.o CMakeFiles/airspyhf.dir/airspyhf/iqbalancer.c.o || libusb1.a
+  LANGUAGE_COMPILE_FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info
+  OBJECT_DIR = CMakeFiles/airspyhf.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = libairspyhf.a
+  TARGET_PDB = airspyhf.a.dbg
+
+# =============================================================================
+# Object build statements for STATIC_LIBRARY target hackrf
+
+
+#############################################
+# Order-only phony target for hackrf
+
+build cmake_object_order_depends_target_hackrf: phony || cmake_object_order_depends_target_usb1
+
+build CMakeFiles/hackrf.dir/hackrf/hackrf.c.o: C_COMPILER__hackrf_Debug /home/david/Documents/Cat-Explorer/app/src/main/cpp/hackrf/hackrf.c || cmake_object_order_depends_target_hackrf
+  DEFINES = -DLIBRARY_RELEASE=\"cat-explorer\" -DLIBRARY_VERSION=\"2026.01\"
+  DEP_FILE = CMakeFiles/hackrf.dir/hackrf/hackrf.c.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -Wno-everything
+  INCLUDES = -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/hackrf -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb
+  OBJECT_DIR = CMakeFiles/hackrf.dir
+  OBJECT_FILE_DIR = CMakeFiles/hackrf.dir/hackrf
+
+
+# =============================================================================
+# Link build statements for STATIC_LIBRARY target hackrf
+
+
+#############################################
+# Link the static library libhackrf.a
+
+build libhackrf.a: C_STATIC_LIBRARY_LINKER__hackrf_Debug CMakeFiles/hackrf.dir/hackrf/hackrf.c.o || libusb1.a
+  LANGUAGE_COMPILE_FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info
+  OBJECT_DIR = CMakeFiles/hackrf.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = libhackrf.a
+  TARGET_PDB = hackrf.a.dbg
+
+# =============================================================================
 # Object build statements for SHARED_LIBRARY target catsdr
 
 
 #############################################
 # Order-only phony target for catsdr
 
-build cmake_object_order_depends_target_catsdr: phony || cmake_object_order_depends_target_rtlsdr cmake_object_order_depends_target_usb1
+build cmake_object_order_depends_target_catsdr: phony || cmake_object_order_depends_target_airspy cmake_object_order_depends_target_airspyhf cmake_object_order_depends_target_hackrf cmake_object_order_depends_target_rtlsdr cmake_object_order_depends_target_usb1
 
 build CMakeFiles/catsdr.dir/catsdr.c.o: C_COMPILER__catsdr_Debug /home/david/Documents/Cat-Explorer/app/src/main/cpp/catsdr.c || cmake_object_order_depends_target_catsdr
   DEFINES = -Dcatsdr_EXPORTS -Drtlsdr_STATIC
   DEP_FILE = CMakeFiles/catsdr.dir/catsdr.c.o.d
   FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info  -fPIC -O2
-  INCLUDES = -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb
+  INCLUDES = -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/rtlsdr/include -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/libusb -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspy -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/airspyhf -I/home/david/Documents/Cat-Explorer/app/src/main/cpp/hackrf
   OBJECT_DIR = CMakeFiles/catsdr.dir
   OBJECT_FILE_DIR = CMakeFiles/catsdr.dir
 
@@ -233,10 +351,10 @@ build CMakeFiles/catsdr.dir/catsdr.c.o: C_COMPILER__catsdr_Debug /home/david/Doc
 #############################################
 # Link the shared library /home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so
 
-build /home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so: C_SHARED_LIBRARY_LINKER__catsdr_Debug CMakeFiles/catsdr.dir/catsdr.c.o | librtlsdr.a libusb1.a || librtlsdr.a libusb1.a
+build /home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so: C_SHARED_LIBRARY_LINKER__catsdr_Debug CMakeFiles/catsdr.dir/catsdr.c.o | librtlsdr.a libairspy.a libairspyhf.a libhackrf.a libusb1.a || libairspy.a libairspyhf.a libhackrf.a librtlsdr.a libusb1.a
   LANGUAGE_COMPILE_FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -fno-limit-debug-info
   LINK_FLAGS = -static-libstdc++ -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments    -Wl,-z,max-page-size=16384
-  LINK_LIBRARIES = librtlsdr.a  libusb1.a  -llog  -lm  -latomic -lm
+  LINK_LIBRARIES = librtlsdr.a  libairspy.a  libairspyhf.a  libhackrf.a  libusb1.a  -llog  -lm  -latomic -lm
   OBJECT_DIR = CMakeFiles/catsdr.dir
   POST_BUILD = :
   PRE_LINK = :
@@ -271,7 +389,13 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 # =============================================================================
 # Target aliases.
 
+build airspy: phony libairspy.a
+
+build airspyhf: phony libairspyhf.a
+
 build catsdr: phony /home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so
+
+build hackrf: phony libhackrf.a
 
 build libcatsdr.so: phony /home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so
 
@@ -287,7 +411,7 @@ build usb1: phony libusb1.a
 #############################################
 # Folder: /home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a
 
-build all: phony libusb1.a librtlsdr.a /home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so
+build all: phony libusb1.a librtlsdr.a libairspy.a libairspyhf.a libhackrf.a /home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/arm64-v8a/libcatsdr.so
 
 # =============================================================================
 # Built-in targets

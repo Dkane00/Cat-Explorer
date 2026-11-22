@@ -1,5 +1,8 @@
 /home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a/CMakeFiles/usb1.dir
 /home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a/CMakeFiles/rtlsdr.dir
+/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a/CMakeFiles/airspy.dir
+/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a/CMakeFiles/airspyhf.dir
+/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a/CMakeFiles/hackrf.dir
 /home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a/CMakeFiles/catsdr.dir
 /home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a/CMakeFiles/edit_cache.dir
 /home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/arm64-v8a/CMakeFiles/rebuild_cache.dir

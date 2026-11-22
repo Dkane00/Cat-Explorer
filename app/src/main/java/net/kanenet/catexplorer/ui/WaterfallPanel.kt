@@ -267,10 +267,10 @@ private fun WideView(
     }
     Text(
         when {
-            s.mode.startsWith("CW") -> "RTL-SDR: tap a signal to tune to it (snaps to the strongest signal nearby). Red line = dial."
-            s.mode.startsWith("DATA") -> "RTL-SDR: tap a signal to put it at 1500 Hz in your audio (snaps to the nearest signal). Red line = dial."
-            s.mode == "USB" || s.mode == "LSB" -> "RTL-SDR: tap the carrier edge of a voice signal to tune to it. Red line = dial, shading = your filter."
-            else -> "RTL-SDR: tap a signal to tune to it. Red line = dial."
+            s.mode.startsWith("CW") -> "SDR: tap a signal to tune to it (snaps to the strongest signal nearby). Red line = dial."
+            s.mode.startsWith("DATA") -> "SDR: tap a signal to put it at 1500 Hz in your audio (snaps to the nearest signal). Red line = dial."
+            s.mode == "USB" || s.mode == "LSB" -> "SDR: tap the carrier edge of a voice signal to tune to it. Red line = dial, shading = your filter."
+            else -> "SDR: tap a signal to tune to it. Red line = dial."
         } + if (s.ptt) "  Paused while transmitting." else "",
         fontSize = 11.sp, lineHeight = 13.sp, maxLines = 1, color = th[ThemeColor.LABEL],
     )
@@ -403,10 +403,11 @@ private fun SdrGainButton(vm: RigViewModel) {
     val th = LocalThemeSettings.current
     val gain by vm.sdrGain.collectAsState()
     val direct by vm.sdrDirect.collectAsState()
+    val kind by vm.sdrKind.collectAsState()
     var open by remember { mutableStateOf(false) }
     Box {
         OutlinedButton({ open = true }, Modifier.height(28.dp), contentPadding = PaddingValues(horizontal = 10.dp)) {
-            Text("Gain " + if (gain < 0) "Auto" else "%.1f dB".format(gain / 10.0), fontSize = 12.sp,
+            Text("Gain " + (kind ?: net.kanenet.catexplorer.audio.SdrKind.RTL).formatGain(gain), fontSize = 12.sp,
                 color = if (direct) th[ThemeColor.LABEL] else Color.Unspecified)
         }
         DropdownMenu(open, { open = false }) {

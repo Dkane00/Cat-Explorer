@@ -17,12 +17,30 @@
     "{LIST_OF_TARGETS_TO_BUILD}"
   ],
   "libraries": {
+    "airspy::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "airspy",
+      "output": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/x86_64/libairspy.a"
+    },
+    "airspyhf::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "airspyhf",
+      "output": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/x86_64/libairspyhf.a"
+    },
     "catsdr::@6890427a1f51a3e7e1df": {
       "toolchain": "toolchain",
       "abi": "x86_64",
       "artifactName": "catsdr",
       "output": "/home/david/Documents/Cat-Explorer/app/build/intermediates/cxx/Debug/2g5b303j/obj/x86_64/libcatsdr.so",
       "runtimeFiles": []
+    },
+    "hackrf::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "hackrf",
+      "output": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/x86_64/libhackrf.a"
     },
     "rtlsdr::@6890427a1f51a3e7e1df": {
       "toolchain": "toolchain",

@@ -286,7 +286,9 @@ internal fun SdrGainSetting(vm: RigViewModel, theme: ThemeSettings, compact: Boo
     val gain by vm.sdrGain.collectAsState()
     val steps by vm.sdrGains.collectAsState()
     val direct by vm.sdrDirect.collectAsState()
-    Text("SDR gain (RTL-SDR on the tablet)", Modifier.padding(top = 4.dp))
+    val kindNow by vm.sdrKind.collectAsState()
+    val kind = kindNow ?: net.kanenet.catexplorer.audio.SdrKind.RTL
+    Text("SDR gain (${kindNow?.label ?: "SDR"} on the tablet)", Modifier.padding(top = 4.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FilterChip(gain < 0, { vm.setSdrGain(-1) }, { Text("Auto") }, colors = selectedBlue())
         FilterChip(gain >= 0, { if (gain < 0) vm.setSdrGain(steps.getOrElse(steps.size / 2) { 0 }) }, { Text("Manual") },
@@ -300,12 +302,18 @@ internal fun SdrGainSetting(vm: RigViewModel, theme: ThemeSettings, compact: Boo
                 idx.toFloat(), { vm.setSdrGain(steps[it.roundToInt().coerceIn(0, steps.lastIndex)]) },
                 valueRange = 0f..steps.lastIndex.toFloat(), steps = (steps.size - 2).coerceAtLeast(0), modifier = Modifier.weight(1f),
             )
-            Text("%.1f dB".format(steps[idx] / 10.0), Modifier.width(72.dp))
+            Text(kind.formatGain(steps[idx]), Modifier.width(80.dp))
         }
     }
     Text(
         when {
-            steps.isEmpty() -> "Open the Waterfall once with the RTL-SDR plugged in and its gain steps appear here."
+            steps.isEmpty() -> "Open the Waterfall once with the SDR plugged in and its gain steps appear here."
+            kind == net.kanenet.catexplorer.audio.SdrKind.HACKRF && gain < 0 ->
+                "The HackRF has no automatic gain: Auto uses a middle setting (LNA 16 dB, VGA 20 dB). Manual sets the total, shared between them."
+            kind == net.kanenet.catexplorer.audio.SdrKind.AIRSPY ->
+                "Auto uses the Airspy's own AGC. Manual picks one of its 22 \"linearity\" gain levels (0 lowest, 21 highest)."
+            kind == net.kanenet.catexplorer.audio.SdrKind.AIRSPY_HF ->
+                "Auto uses the HF+'s AGC. Manual turns the AGC off and sets its attenuator: 48 dB gain is no attenuation."
             direct -> "Right now the SDR samples HF directly (an RTL-SDR Blog V3 below 24 MHz), so gain has no effect; it applies on " +
                 "10 m and 6 m, and on SDRs with an HF front end. Lower it if the waterfall says the SDR is overloaded."
             else -> "Higher gain shows weaker signals; lower it if the waterfall says the SDR is overloaded or the band looks smeared."

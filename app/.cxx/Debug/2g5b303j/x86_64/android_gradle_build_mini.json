@@ -17,6 +17,18 @@
     "{LIST_OF_TARGETS_TO_BUILD}"
   ],
   "libraries": {
+    "airspyhf::@6890427a1f51a3e7e1df": {
+      "artifactName": "airspyhf",
+      "abi": "x86_64",
+      "output": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/x86_64/libairspyhf.a",
+      "runtimeFiles": []
+    },
+    "airspy::@6890427a1f51a3e7e1df": {
+      "artifactName": "airspy",
+      "abi": "x86_64",
+      "output": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/x86_64/libairspy.a",
+      "runtimeFiles": []
+    },
     "catsdr::@6890427a1f51a3e7e1df": {
       "artifactName": "catsdr",
       "abi": "x86_64",
@@ -33,6 +45,12 @@
       "artifactName": "rtlsdr",
       "abi": "x86_64",
       "output": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/x86_64/librtlsdr.a",
+      "runtimeFiles": []
+    },
+    "hackrf::@6890427a1f51a3e7e1df": {
+      "artifactName": "hackrf",
+      "abi": "x86_64",
+      "output": "/home/david/Documents/Cat-Explorer/app/.cxx/Debug/2g5b303j/x86_64/libhackrf.a",
       "runtimeFiles": []
     }
   }
