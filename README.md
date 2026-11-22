@@ -44,6 +44,9 @@ The FT-857D's CAT language is much smaller than the FT-891's: five-byte commands
 - **Not possible over the FT-857D's CAT:** volume, RF gain, mic gain, transmit power, filter widths, DSP, memories, the tuner, CW keying, and copying VFO A to B. The app hides those controls, and the **Tune** button too, because the radio's power can't be lowered over CAT for a tuning carrier. The radio's undocumented memory-write commands are deliberately not used: a wrong guess there could overwrite its calibration.
 - **Through FLRig:** set FLRig up for the FT-857D and the app uses FLRig's general controls (frequency, mode, PTT, meters, split, A/B).
 - **CAT console:** type five-byte commands in hex, e.g. `00 00 00 00 03` (read frequency and mode); the reply comes back in hex.
+- **No DSP panel for the FT-857D.** The radio has a noise blanker, IF shift, AGC, IPO/ATT and its DSP (noise reduction, auto-notch, high- and low-cut), but Yaesu's CAT commands for the FT-857D reach none of them, and neither does Hamlib, the rig-control library used by WSJT-X and fldigi. They are front-panel and menu controls only. The radio keeps these settings in its internal memory (EEPROM), and in principle reading those bytes could show them and writing them could change them, but there is no verified FT-857D memory map, some changes only take effect after the radio restarts, and a wrong write could damage its settings or calibration. So the app leaves them alone.
+
+**FT-857D owners: help wanted.** If you'd like the FT-857D support taken further (read-only status for NB, AGC, DSP and the like first, and controls only once confirmed safe), or simply to have what's here confirmed on a real radio, please [open an issue](https://github.com/Dkane00/Cat-Explorer/issues) on GitHub. Testing needs a real FT-857D, which I don't have.
 
 ### Through FLRig on a PC
 

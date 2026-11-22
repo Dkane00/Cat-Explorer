@@ -677,7 +677,18 @@ s += [*sec('17. Using an FT-857D', 4.6),
         'tuning carrier. The app also never uses the radio\'s undocumented memory-write commands, because a wrong guess there could '
         'overwrite its calibration.', small),
       P('The <b>CAT console</b> speaks the FT-857D\'s five-byte commands in hex: type, for example, '
-        '<font face="Mono">00 00 00 00 03</font> (read frequency and mode) and the reply comes back in hex.', small)]
+        '<font face="Mono">00 00 00 00 03</font> (read frequency and mode) and the reply comes back in hex.', small),
+      *H2('Why there is no DSP panel'),
+      P('The FT-857D has a noise blanker, IF shift, AGC, IPO/ATT and its DSP (noise reduction, auto-notch, high- and low-cut), but '
+        'Yaesu\'s CAT commands for it reach none of them, and neither does Hamlib, the rig-control library used by WSJT-X and fldigi. '
+        'They are front-panel and menu controls only, so the FT-891\'s DSP and mic-EQ panels don\'t appear with an FT-857D.'),
+      P('The radio keeps these settings in its internal memory (EEPROM). In principle, reading those bytes could show them and writing '
+        'them could change them. But there is no verified FT-857D memory map, some changes only take effect after the radio restarts, '
+        'and a wrong write could damage its settings or calibration. So the app leaves them alone.'),
+      ] + box('<b>FT-857D owners: help wanted.</b> If you would like the FT-857D support taken further (read-only status for NB, AGC, '
+              'DSP and the like first, and controls only once confirmed safe), or simply to have what is here confirmed on a real radio, '
+              "please open an issue at <link href='https://github.com/Dkane00/Cat-Explorer/issues' color='#0B6FA4'><u>github.com/Dkane00/Cat-Explorer/issues</u></link>. "
+              'Testing needs a real FT-857D, which the author does not have.')
 
 # ---------------------------------------------------------------- 18 licence
 s += [*sec('18. Licence and credits', 7.5),
